@@ -1,0 +1,3 @@
+interface:
+  display_name: "Analyze"
+  short_description: "Interview, gather evidence, write a finding doc"

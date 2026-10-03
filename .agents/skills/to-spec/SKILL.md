@@ -6,17 +6,21 @@ disable-model-invocation: true
 
 This skill takes the current conversation context and codebase understanding and produces a spec. Do NOT interview the user — just synthesize what you already know.
 
-The issue tracker and triage label vocabulary should have been provided to you. If not, tell the user to run `/setup-matt-pocock-skills`.
+The issue tracker and triage label vocabulary should have been provided to you. If not, tell the user to run `/init-project`.
 
 ## Process
 
-1. Explore the repo to understand the current state of the codebase, if you haven't already. Use the project's domain glossary vocabulary throughout the spec, and respect any ADRs in the area you're touching.
+1. Explore the repo to understand the current state of the codebase, if you haven't already. Use the project's domain glossary vocabulary throughout the spec, and respect any ADRs in the area you're touching. If the interview log `.scratch/<feature>/OPEN_QUESTIONS.md` exists, read it: its decisions feed the spec, its ADR candidates feed step 4.
 
 2. Sketch out the seams at which you're going to test the feature. Existing seams should be preferred to new ones. Use the highest seam possible. If new seams are needed, propose them at the highest point you can. The fewer seams across the codebase, the better - the ideal number is one.
 
 Check with the user that these seams match their expectations.
 
-3. Write the spec using the template below, then publish it to the project issue tracker. Apply the `ready-for-agent` triage label - no need for additional triage.
+3. Write the spec using the template below, then publish it to the project issue tracker. Apply the `ready-for-agent` triage label - no need for additional triage. With the local tracker, publishing means writing `docs/specs/NNNN-<feature>-spec.md`: `NNNN` is the highest number in `docs/specs/` plus one (sequential across the repo, starting at `0001`), `<feature>` is the slug of the interview log.
+
+4. Write each ADR candidate that still meets the three criteria in [ADR-FORMAT.md](../domain-modeling/ADR-FORMAT.md) as an ADR in `docs/adr/`, in that format and numbering, and reference it from the spec.
+
+5. Show the spec path and the new ADRs, then stop at the spec stop gate.
 
 <spec-template>
 
@@ -63,6 +67,10 @@ A list of testing decisions that were made. Include:
 - A description of what makes a good test (only test external behavior, not implementation details)
 - Which modules will be tested
 - Prior art for the tests (i.e. similar types of tests in the codebase)
+
+## Acceptance Criteria
+
+A numbered list of checkable criteria the finished feature must meet, including the error behaviour and edge cases settled in the interview.
 
 ## Out of Scope
 

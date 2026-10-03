@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Break a plan, spec, or conversation into a set of **tickets** — tracer-bullet vertical slices, each declaring the tickets that **block** it.
 
-The issue tracker and triage label vocabulary should have been provided to you. If not, tell the user to run `/setup-matt-pocock-skills`.
+The issue tracker and triage label vocabulary should have been provided to you. If not, tell the user to run `/init-project`.
 
 ## Process
 
@@ -47,6 +47,8 @@ Present the proposed breakdown as a numbered list. For each ticket, show:
 - **Blocked by**: which other tickets (if any) must complete first
 - **What it delivers**: the end-to-end behaviour this ticket makes work
 
+Below the list, draw the tickets map's mermaid diagram (see step 5) so the user sees the blocking edges as a graph.
+
 Ask the user:
 
 - Does the granularity feel right? (too coarse / too fine)
@@ -57,14 +59,21 @@ Iterate until the user approves the breakdown.
 
 ### 5. Publish the tickets to the configured tracker
 
-Publish the approved tickets. **How** depends on the tracker `/setup-matt-pocock-skills` configured — the tickets are the same either way, only the shape of the blocking edges changes:
+Publish the approved tickets. **How** depends on the tracker `/init-project` configured — the tickets are the same either way, only the shape of the blocking edges changes:
 
-- **Local files** → write one file per ticket under `.scratch/<feature-slug>/issues/<NN>-<slug>.md`, numbered from `01` in dependency order (blockers first). Each file's "Blocked by" lists the numbers/titles it depends on. Use the per-ticket file template below — one ticket per file, never a single combined file.
+- **Local files** → write one file per ticket under `.scratch/<feature>/issues/<NN>-<slug>.md` (`<feature>` is the slug of the spec and interview log), numbered from `01` in dependency order (blockers first). Each file's "Blocked by" lists the numbers/titles it depends on. Use the per-ticket file template below — one ticket per file, never a single combined file.
 - **A real issue tracker (GitHub, Linear, …)** → publish one issue per ticket in dependency order (blockers first) so each ticket's blocking edges can reference real identifiers. Use the platform's native blocking / sub-issue relationship where it has one; otherwise set each ticket's "Blocked by" to the blocking issues. Apply the `ready-for-agent` triage label unless instructed otherwise — the tickets are agent-grabbable by construction.
 
 Work the **frontier**: any ticket whose blockers are all done. For a purely linear chain that means top to bottom.
 
-Do NOT close or modify any parent issue.
+Every ticket starts at `ready-for-agent` and moves `ready-for-agent → in-progress → done`; the ticket's **Status** is the source of truth. Blocked is drawn, not stored: a `ready-for-agent` ticket with an unfinished blocker shows as blocked on the tickets map.
+
+Then build the **tickets map** from [references/tickets-map-template.md](references/tickets-map-template.md): a mermaid dependency graph coloured by status, a legend, and a table of every ticket. Always build it, for any tracker:
+
+- **Local files** → write it to `.scratch/<feature>/TICKETS.md`, beside the `issues/` folder. It is an index; each ticket stays in its own file.
+- **A real issue tracker** → post it as a comment on the parent issue, or in your message to the user when there is no parent.
+
+Do NOT close the parent issue or edit its body.
 
 <local-ticket-template>
 
@@ -103,3 +112,7 @@ The end-to-end behaviour this ticket makes work, from the user's perspective —
 </issue-template>
 
 In either form, avoid specific file paths or code snippets — they go stale fast. Exception: if a prototype produced a snippet that encodes a decision more precisely than prose can (state machine, reducer, schema, type shape), inline it and note briefly that it came from a prototype. Trim to the decision-rich parts — not a working demo, just the important bits.
+
+### 6. Show the tickets map
+
+Show the user the published tickets map — the diagram, the table, and where it lives — then stop at the tickets stop gate. Done when every published ticket appears in the map with its Status.

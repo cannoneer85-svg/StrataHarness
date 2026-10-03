@@ -1,0 +1,5 @@
+interface:
+  display_name: "Close Task"
+  short_description: "Preflight, handoff, then one local commit"
+policy:
+  allow_implicit_invocation: false

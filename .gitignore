@@ -1,0 +1,7 @@
+# Temporary agent workspace: drafts, interview logs, tickets (see AGENTS.md)
+.scratch/
+
+# OS / editor noise
+Thumbs.db
+desktop.ini
+.DS_Store

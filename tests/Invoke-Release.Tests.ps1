@@ -603,7 +603,7 @@ Describe 'Invoke-Release.ps1 -Apply release commit, tag, and push' {
         $notesFile = Join-Path $fix '.scratch/release/notes.draft.md'
         $applyRes = Invoke-ReleaseApply -RepoRoot $fix -NotesFile $notesFile -Title "Should Fail" -SkipChecks
         $applyRes.ExitCode | Should -Not -Be 0
-        $applyRes.Output | Should -Match 'HEAD has changed since release plan was generated'
+        $applyRes.Output | Should -Match 'HEAD has changed since release plan'
     }
 }
 

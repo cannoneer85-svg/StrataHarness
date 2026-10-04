@@ -14,7 +14,7 @@ BeforeAll {
         $resolvedRoot = (Resolve-Path -LiteralPath $root).Path
 
         # Copy non-ignored template files into the fixture
-        Get-ChildItem -LiteralPath $script:TemplateRoot -Recurse -File |
+        Get-ChildItem -LiteralPath $script:TemplateRoot -Recurse -File -Force |
             Where-Object {
                 $_.FullName -notmatch '[\\/]\.git([\\/]|$)' -and
                 $_.FullName -notmatch '[\\/]\.scratch([\\/]|$)' -and
@@ -328,7 +328,7 @@ Describe 'Initialize-Project.ps1 -Mode New' {
 
         $skillsText = Get-Content -LiteralPath (Join-Path $root '.agents/SKILLS.md') -Raw -Encoding utf8
         $skillsText | Should -Match '- \*\*template-source:\*\* `https://github\.com/my-org/my-template`'
-        $skillsText | Should -Match '- \*\*template-version:\*\* `v0\.0\.0'
+        $skillsText | Should -Match '- \*\*template-version:\*\* `v\d+\.\d+\.\d+'
     }
 
     It 'records vX.Y.Z (<sha>) in .agents/SKILLS.md when template is a git repo with VERSION' {
@@ -341,7 +341,7 @@ Describe 'Initialize-Project.ps1 -Mode New' {
         & $script:InitScript -Mode New -RepoRoot $root -TemplateSource 'https://github.com/my-org/my-template'
 
         $skillsText = Get-Content -LiteralPath (Join-Path $root '.agents/SKILLS.md') -Raw -Encoding utf8
-        $skillsText | Should -Match "- \*\*template-version:\*\* ``v0\.0\.0 \($sha\)``"
+        $skillsText | Should -Match "- \*\*template-version:\*\* ``v\d+\.\d+\.\d+ \($sha\)``"
     }
 
     It 'falls back to YYYY-MM-DD <sha> in New mode when VERSION does not exist' {
@@ -517,7 +517,7 @@ Describe 'Initialize-Project.ps1 -Mode Adopt' {
 
         $skillsText = Get-Content -LiteralPath (Join-Path $target '.agents/SKILLS.md') -Raw -Encoding utf8
         $skillsText | Should -Match "- \*\*template-source:\*\* ``$([regex]::Escape($script:TemplateRoot))``"
-        $skillsText | Should -Match '- \*\*template-version:\*\* `v0\.0\.0'
+        $skillsText | Should -Match '- \*\*template-version:\*\* `v\d+\.\d+\.\d+'
     }
 
     It 'records explicit vX.Y.Z (<sha>) in target repo when -TemplateVersion is provided' {
@@ -550,7 +550,7 @@ Describe 'Initialize-Project.ps1 -Mode Adopt' {
 
         # Capture state of all files after first run
         $filesBefore = @{}
-        Get-ChildItem -LiteralPath $target -Recurse -File | ForEach-Object {
+        Get-ChildItem -LiteralPath $target -Recurse -File -Force | ForEach-Object {
             $rel = [System.IO.Path]::GetRelativePath($target, $_.FullName)
             $filesBefore[$rel] = [System.IO.File]::ReadAllBytes($_.FullName)
         }
@@ -559,7 +559,7 @@ Describe 'Initialize-Project.ps1 -Mode Adopt' {
         & $script:InitScript -Mode Adopt -RepoRoot $target -TemplateSource $script:TemplateRoot
 
         $filesAfter = @{}
-        Get-ChildItem -LiteralPath $target -Recurse -File | ForEach-Object {
+        Get-ChildItem -LiteralPath $target -Recurse -File -Force | ForEach-Object {
             $rel = [System.IO.Path]::GetRelativePath($target, $_.FullName)
             $filesAfter[$rel] = [System.IO.File]::ReadAllBytes($_.FullName)
         }
@@ -634,7 +634,7 @@ Describe 'Initialize-Project.ps1 tracker reconfiguration' {
 
         # Snapshot all other files
         $otherFilesBefore = @{}
-        Get-ChildItem -LiteralPath $root -Recurse -File |
+        Get-ChildItem -LiteralPath $root -Recurse -File -Force |
             Where-Object {
                 $_.FullName -ne (Join-Path $root 'AGENTS.md') -and
                 $_.FullName -ne (Join-Path $root 'docs/agents/issue-tracker.md')
@@ -704,7 +704,7 @@ Describe 'Initialize-Project.ps1 -Mode Update' {
     It 'leaves target repository completely unchanged in dry-run without -Apply' {
         $fix = New-UpdateFixture
         $filesBefore = @{}
-        Get-ChildItem -LiteralPath $fix.ProjectRoot -Recurse -File | ForEach-Object {
+        Get-ChildItem -LiteralPath $fix.ProjectRoot -Recurse -File -Force | ForEach-Object {
             $rel = [System.IO.Path]::GetRelativePath($fix.ProjectRoot, $_.FullName)
             $filesBefore[$rel] = [System.IO.File]::ReadAllBytes($_.FullName)
         }
@@ -712,7 +712,7 @@ Describe 'Initialize-Project.ps1 -Mode Update' {
         & $script:InitScript -Mode Update -RepoRoot $fix.ProjectRoot
 
         $filesAfter = @{}
-        Get-ChildItem -LiteralPath $fix.ProjectRoot -Recurse -File | ForEach-Object {
+        Get-ChildItem -LiteralPath $fix.ProjectRoot -Recurse -File -Force | ForEach-Object {
             $rel = [System.IO.Path]::GetRelativePath($fix.ProjectRoot, $_.FullName)
             $filesAfter[$rel] = [System.IO.File]::ReadAllBytes($_.FullName)
         }

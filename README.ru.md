@@ -32,8 +32,8 @@
      cd my-project
      ```
 2. **Инициализируйте проект:**
-   - В чате с агентом введите команду: `/init-project`
-   - Либо запустите скрипт напрямую в терминале:
+   - **Через AI-агента (рекомендуется):** В чате с агентом введите `/init-project` (или напишите *«Инициализируй новый проект»*). Агент запустит скрипт и проведёт интерактивный опрос по выбору трекера задач, стека технологий ([`.agents/CONTEXT.md`](.agents/CONTEXT.md)) и стандартов кодирования (`CODING_STANDARDS.md`).
+   - **Либо напрямую в терминале:**
      ```powershell
      pwsh -NoProfile -File .agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode New -Tracker local
      ```
@@ -49,16 +49,28 @@
 
 ## Режимы работы `Initialize-Project.ps1`
 
-Скрипт инициализации ([`.agents/skills/init-project/scripts/Initialize-Project.ps1`](.agents/skills/init-project/scripts/Initialize-Project.ps1)) поддерживает 4 режима:
+Движок автоматизации жизненного цикла ([`.agents/skills/init-project/scripts/Initialize-Project.ps1`](.agents/skills/init-project/scripts/Initialize-Project.ps1)) поддерживает 4 режима, доступных как интерактивно через AI-агента, так и напрямую через PowerShell:
 
-| Режим | Назначение | Пример команды |
-|---|---|---|
-| **New** | Создание чистого проекта из шаблона (удаление мета-файлов, разворачивание каркасов). | `pwsh -NoProfile -File .agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode New -Tracker local` |
-| **Adopt** | Подключение правил и скиллов к существующему коду без перезаписи файлов пользователя. Выводит отчёт о конфликтах и обновляет `.gitignore`. | `pwsh -NoProfile -File <путь-к-шаблону>/.agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode Adopt -RepoRoot . -Tracker local` |
-| **Update** | Обновление правил и скиллов в существующем проекте из новой версии Шаблона. Без `-Apply` показывает diff и выдержку CHANGELOG (dry-run); с `-Apply` применяет изменения. | `pwsh -NoProfile -File <путь-к-шаблону>/.agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode Update -RepoRoot . -Apply` |
-| **SetTracker** | Смена используемого трекера задач (`local`, `github` или `gitlab`). | `pwsh -NoProfile -File .agents/skills/init-project/scripts/Initialize-Project.ps1 -Tracker github` |
+| Режим | Назначение | Вызов через AI-агента | Прямая команда в CLI |
+|---|---|---|---|
+| **New** | Создание чистого проекта из шаблона (удаление мета-файлов, разворачивание каркасов). | `/init-project` или *«Инициализируй новый проект»* | `pwsh -NoProfile -File .agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode New -Tracker local` |
+| **Adopt** | Подключение правил и скиллов к существующему коду без перезаписи файлов пользователя. Выводит отчёт о конфликтах и обновляет `.gitignore`. | `/init-project adopt` или *«Внедри StrataHarness в существующий проект»* | `pwsh -NoProfile -File <путь-к-шаблону>/.agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode Adopt -RepoRoot . -Tracker local` |
+| **Update** | Обновление правил и скиллов в существующем проекте из новой версии Шаблона. Без `-Apply` показывает diff и выдержку CHANGELOG (dry-run); с `-Apply` применяет изменения. | `/init-project update` или *«Обнови скиллы шаблона»* | `pwsh -NoProfile -File <путь-к-шаблону>/.agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode Update -RepoRoot . -Apply` |
+| **SetTracker** | Смена используемого трекера задач (`local`, `github` или `gitlab`). | `/init-project tracker` или *«Переключи трекер на GitHub»* | `pwsh -NoProfile -File .agents/skills/init-project/scripts/Initialize-Project.ps1 -Tracker github` |
 
 Все режимы идемпотентны и безопасны для повторного запуска.
+
+### Провайдеры трекера задач
+
+StrataHarness поддерживает 3 адаптера трекера задач, настраиваемых через параметр `-Tracker <провайдер>`:
+
+| Провайдер | Где живут задачи | Требования | Когда использовать |
+|---|---|---|---|
+| **`local`** *(по умолчанию)* | Локальные Markdown-файлы в `.scratch/<feature>/issues/` с картой зависимостей `TICKETS.md`. | Никаких. Работает полностью офлайн. | Индивидуальная разработка, закрытые петли с AI без внешних сервисов. |
+| **`github`** | GitHub Issues в репозитории проекта. | Установленный и авторизованный GitHub CLI (`gh auth login`). | Открытый исходный код или командная разработка на GitHub со связкой задач и PR. |
+| **`gitlab`** | GitLab Issues в репозитории проекта. | Установленный и авторизованный GitLab CLI (`glab auth login`). | Проекты на базе GitLab или GitLab Self-Managed со связкой задач и Merge Requests. |
+
+Переключить провайдер можно в любой момент командой `Initialize-Project.ps1 -Tracker <провайдер>` (или попросив агента: *«Переключи трекер на GitHub»*). При этом обновляются только [`docs/agents/issue-tracker.md`](docs/agents/issue-tracker.md) и [`AGENTS.md`](AGENTS.md); код проекта не затрагивается.
 
 ---
 
@@ -123,19 +135,23 @@ flowchart TD
 ### Обновление проекта из Шаблона
 Чтобы обновить существующий проект улучшениями, исправлениями багов или новыми скиллами из Шаблона:
 
-1. Склонируйте или скачайте целевой тег релиза Шаблона:
-   ```powershell
-   git clone --branch v1.1.0 https://github.com/cannoneer85-svg/StrataHarness.git ../template-release
-   ```
-2. Проверьте изменения в режиме предварительного просмотра (dry-run):
-   ```powershell
-   pwsh -NoProfile -File ../template-release/.agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode Update -RepoRoot .
-   ```
-   Скрипт проверит сохранённую `template-version`, выведет целевую версию, покажет выдержку из CHANGELOG между ними и предупредит о ломающих изменениях (MAJOR), если они есть.
-3. Примените обновление:
-   ```powershell
-   pwsh -NoProfile -File ../template-release/.agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode Update -RepoRoot . -Apply
-   ```
+1. **Через AI-агента (интерактивно):**
+   Просто попросите агента в чате: *«Обнови скиллы шаблона»* (или введите `/init-project update`). Агент проверит сохранённую `template-version`, обратится к шаблону, покажет diff и выдержку из CHANGELOG, предупредит о ломающих изменениях и запросит ваше подтверждение перед применением.
+
+2. **Напрямую в PowerShell:**
+   - Склонируйте или скачайте целевой тег релиза Шаблона:
+     ```powershell
+     git clone --branch v1.1.0 https://github.com/cannoneer85-svg/StrataHarness.git ../template-release
+     ```
+   - Проверьте изменения в режиме предварительного просмотра (dry-run):
+     ```powershell
+     pwsh -NoProfile -File ../template-release/.agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode Update -RepoRoot .
+     ```
+     Скрипт проверит сохранённую `template-version`, выведет целевую версию, покажет выдержку из CHANGELOG между ними и предупредит о ломающих изменениях (MAJOR), если они есть.
+   - Примените обновление:
+     ```powershell
+     pwsh -NoProfile -File ../template-release/.agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode Update -RepoRoot . -Apply
+     ```
 
 ---
 

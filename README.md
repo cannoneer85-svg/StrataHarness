@@ -32,8 +32,8 @@ Supported AI agent environments:
      cd my-project
      ```
 2. **Initialize the project:**
-   - In your agent session, type `/init-project`
-   - Or run the script directly from your terminal:
+   - **Via AI Agent (recommended):** In your agent session, type `/init-project` (or say *"Initialize new project"*). The agent runs the deterministic script and guides you through configuring the issue tracker, tech stack ([`.agents/CONTEXT.md`](.agents/CONTEXT.md)), and coding conventions (`CODING_STANDARDS.md`).
+   - **Or directly via terminal:**
      ```powershell
      pwsh -NoProfile -File .agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode New -Tracker local
      ```
@@ -49,16 +49,28 @@ Supported AI agent environments:
 
 ## `Initialize-Project.ps1` Modes
 
-The initialization script ([`.agents/skills/init-project/scripts/Initialize-Project.ps1`](.agents/skills/init-project/scripts/Initialize-Project.ps1)) supports 4 modes:
+The lifecycle automation engine ([`.agents/skills/init-project/scripts/Initialize-Project.ps1`](.agents/skills/init-project/scripts/Initialize-Project.ps1)) supports 4 modes, accessible either interactively through the AI agent or directly via PowerShell:
 
-| Mode | Purpose | Example Command |
-|---|---|---|
-| **New** | Create a clean project from the template (strips meta files, installs skeletons). | `pwsh -NoProfile -File .agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode New -Tracker local` |
-| **Adopt** | Adopt skills and rules into an existing codebase without overwriting user files. Reports conflicts and updates `.gitignore`. | `pwsh -NoProfile -File <template-path>/.agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode Adopt -RepoRoot . -Tracker local` |
-| **Update** | Update rules and skills in an existing project from a newer template version. Without `-Apply`, shows diff and changelog (dry-run); with `-Apply`, applies changes. | `pwsh -NoProfile -File <template-path>/.agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode Update -RepoRoot . -Apply` |
-| **SetTracker** | Switch task tracker provider (`local`, `github`, or `gitlab`). | `pwsh -NoProfile -File .agents/skills/init-project/scripts/Initialize-Project.ps1 -Tracker github` |
+| Mode | Purpose | AI Agent Invocation | Direct CLI Command |
+|---|---|---|---|
+| **New** | Create a clean project from the template (strips meta files, installs skeletons). | `/init-project` or *"Initialize new project"* | `pwsh -NoProfile -File .agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode New -Tracker local` |
+| **Adopt** | Adopt skills and rules into an existing codebase without overwriting user files. Reports conflicts and updates `.gitignore`. | `/init-project adopt` or *"Adopt StrataHarness into existing project"* | `pwsh -NoProfile -File <template-path>/.agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode Adopt -RepoRoot . -Tracker local` |
+| **Update** | Update rules and skills in an existing project from a newer template version. Without `-Apply`, shows diff and changelog (dry-run); with `-Apply`, applies changes. | `/init-project update` or *"Update template skills"* | `pwsh -NoProfile -File <template-path>/.agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode Update -RepoRoot . -Apply` |
+| **SetTracker** | Switch task tracker provider (`local`, `github`, or `gitlab`). | `/init-project tracker` or *"Switch tracker to github"* | `pwsh -NoProfile -File .agents/skills/init-project/scripts/Initialize-Project.ps1 -Tracker github` |
 
 All modes are idempotent and safe to re-run.
+
+### Issue Tracker Providers
+
+StrataHarness provides 3 issue tracker adapters configured via `-Tracker <provider>`:
+
+| Provider | Where issues live | Requirements | Best for |
+|---|---|---|---|
+| **`local`** *(default)* | Local Markdown files under `.scratch/<feature>/issues/` with dependency map `TICKETS.md`. | None. Works completely offline. | Solo development, private repos, or self-contained AI sessions without external services. |
+| **`github`** | GitHub Issues within the repository. | GitHub CLI (`gh`) installed and authenticated (`gh auth login`). | Open-source or team projects hosted on GitHub; links tickets with PRs and milestones. |
+| **`gitlab`** | GitLab Issues within the project. | GitLab CLI (`glab`) installed and authenticated (`glab auth login`). | Projects hosted on GitLab / GitLab Self-Managed; links issues with Merge Requests. |
+
+You can switch providers at any time with `Initialize-Project.ps1 -Tracker <provider>` (or by asking the agent *"Switch tracker to github"*). Only [`docs/agents/issue-tracker.md`](docs/agents/issue-tracker.md) and [`AGENTS.md`](AGENTS.md) are modified; no application code is touched.
 
 ---
 
@@ -123,19 +135,23 @@ The template uses [Semantic Versioning (SemVer)](https://semver.org/):
 ### Updating a Downstream Project
 To update an existing project with improvements, bug fixes, or new skills from this Template:
 
-1. Fetch or clone the target template release tag:
-   ```powershell
-   git clone --branch v1.1.0 https://github.com/cannoneer85-svg/StrataHarness.git ../template-release
-   ```
-2. Preview the changes (dry-run):
-   ```powershell
-   pwsh -NoProfile -File ../template-release/.agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode Update -RepoRoot .
-   ```
-   The script inspects your recorded `template-version`, displays the target version, prints the relevant CHANGELOG excerpt for the versions in-between, and flags any MAJOR breaking changes.
-3. Apply the update:
-   ```powershell
-   pwsh -NoProfile -File ../template-release/.agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode Update -RepoRoot . -Apply
-   ```
+1. **Via AI Agent (interactive):**
+   Simply ask your agent *"Update template skills"* (or type `/init-project update`). The agent checks your recorded `template-version`, inspects the upstream template, presents the CHANGELOG diff and any breaking changes, and asks for confirmation before applying.
+
+2. **Via PowerShell directly:**
+   - Fetch or clone the target template release tag:
+     ```powershell
+     git clone --branch v1.1.0 https://github.com/cannoneer85-svg/StrataHarness.git ../template-release
+     ```
+   - Preview the changes (dry-run):
+     ```powershell
+     pwsh -NoProfile -File ../template-release/.agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode Update -RepoRoot .
+     ```
+     The script inspects your recorded `template-version`, displays the target version, prints the relevant CHANGELOG excerpt for the versions in-between, and flags any MAJOR breaking changes.
+   - Apply the update:
+     ```powershell
+     pwsh -NoProfile -File ../template-release/.agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode Update -RepoRoot . -Apply
+     ```
 
 ---
 

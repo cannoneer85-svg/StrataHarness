@@ -1,4 +1,3 @@
-<!-- docs/handoff/2026-10-04-readme-modes-clarification.md -->
 # Передача контекста: readme-modes-clarification
 
 **Дата:** 2026-10-04  

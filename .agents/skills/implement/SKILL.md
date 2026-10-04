@@ -49,7 +49,7 @@ Subagents run one at a time, in this workspace, on the current branch — no wor
 
 **Loop** until every ticket is `done` or a stop condition fires:
 
-1. **Pick & Mark in-progress** — select the next frontier ticket whose blockers are all `done`. Update its issue file (`Status: in-progress`) AND `.scratch/<feature>/TICKETS.md` (set node class to `inprogress` and table status to `in-progress`) **before calling `invoke_subagent`**. Never spawn a subagent while the ticket still shows `ready-for-agent`.
+1. **Pick & Mark in-progress** — select the next frontier ticket whose blockers are all `done`. Update its issue file (`Status: in-progress`) AND `.scratch/<feature>/TICKETS.md` (set node class to `inprogress` and table status to `in-progress`) **before any execution begins** (spawning a subagent, running interactive steps with the user, or executing orchestrator commands). Never work on a ticket or spawn a subagent while the ticket still shows `ready-for-agent` or `ready-for-human`.
 2. **Spawn** one implementer. The prompt holds: the Brief's path, the ticket's path, and per-ticket notes (what earlier tickets produced that this one builds on, user decisions it depends on, known pitfalls). Wait for its report in the format of [references/report-template.md](references/report-template.md).
 3. **Verify** yourself rather than trusting the report: re-run the ticket's targeted tests and relevant validators (do not run the full repository test suite here), and compare `git status` / `git diff` with the ticket's scope. Delete stray artifacts the run left behind, such as test result files.
 4. **Pass** — green and within scope: set the ticket `done` and continue with step 1 without stopping for the user.

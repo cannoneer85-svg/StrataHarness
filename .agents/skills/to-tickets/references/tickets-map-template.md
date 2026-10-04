@@ -19,10 +19,11 @@ Write the map's prose, labels and table in the human-facing language set in the 
   | `in-progress` | — | `inprogress` |
   | `ready-for-agent` | all `done` | `ready` (the frontier) |
   | `ready-for-agent` | any not `done` | `blocked` |
+  | `ready-for-human` | — | `blocked` (awaits human intervention) |
 
   Group tickets per class on one `class` line; omit a class line that has no tickets.
 - **Table** — one row per ticket in number order; the Status column copies the field verbatim.
-- **Sync** — whoever changes a ticket's Status updates, in the same edit, its class, its table row, and the class of every ticket that change unblocks (`blocked` → `ready`).
+- **Sync** — whoever changes a ticket's Status updates, in the same edit, its class, its table row, and the class of every ticket that change unblocks (`blocked` → `ready`). When active work starts on any ticket (including `ready-for-human` executed interactively with the user), it must transition to `in-progress` (class `inprogress`) immediately.
 
 ## Block
 
@@ -55,7 +56,7 @@ flowchart TD
     class T04 blocked
 ```
 
-**Легенда:** синий — `ready-for-agent`, все блокеры закрыты (фронтир) · жёлтый — `in-progress` · зелёный — `done` · серый — ждёт блокеров.
+**Легенда:** синий — `ready-for-agent`, все блокеры закрыты (фронтир) · жёлтый — `in-progress` · зелёный — `done` · серый — ждёт блокеров или человека (`ready-for-human`).
 
 | # | Тикет | Blocked by | Status |
 |---|---|---|---|

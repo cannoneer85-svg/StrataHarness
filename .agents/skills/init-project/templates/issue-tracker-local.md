@@ -18,7 +18,7 @@ Specs live in the repo, outside `.scratch`: `docs/specs/<NNNN>-<feature>-spec.md
 ## Ticket Structure
 
 - Each ticket is a Markdown file `.scratch/<feature>/issues/<NN>-<slug>.md` with: title, **What to build**, **Blocked by**, **Status**, and acceptance criteria as checkboxes. Template: `to-tickets`.
-- **Status** moves `ready-for-agent → in-progress → done` and is the source of truth. `TICKETS.md` mirrors it; a `ready-for-agent` ticket with an unfinished blocker is drawn as blocked there.
+- **Status** moves `(ready-for-agent | ready-for-human) → in-progress → done` and is the source of truth. `TICKETS.md` mirrors it; a ticket with an unfinished blocker or awaiting human intervention is drawn as blocked there. As soon as work starts on any ticket — whether by an autonomous agent, orchestrator, or interactively with the user — its Status must transition to `in-progress` immediately.
 
 ## Workflow
 

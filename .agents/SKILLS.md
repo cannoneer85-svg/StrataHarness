@@ -2,8 +2,8 @@
 
 Каталог всех скиллов Шаблона из `.agents/skills/`. Категории задаются здесь, а не папками (см. ADR 0002). При добавлении, удалении или переименовании скилла Реестр обновляется в том же изменении. Согласованность проверяет `.agents/scripts/Test-Template.ps1`.
 
-- **template-version:** `2026-10-03 821c2a7`
-- **template-source:** `d:/YandexDisk/MyProjects/AI/NEW-PROJECT-SETUP`
+- **template-version:** `v0.0.0`
+- **template-source:** `https://github.com/cannoneer85-svg/StrataHarness`
 
 **Колонки.** Запуск: `ручной` — модель не вызывает скилл сама (`disable-model-invocation: true` в `SKILL.md` и `allow_implicit_invocation: false` в `agents/openai.yaml`), только слэш-командой или чтением по пути; `авто` — модель может выбрать скилл сама. Источник: `matt` — скилл Matt Pocock без изменений, `matt+правки` — скилл Matt с нашими правками (см. ADR 0003), `свой` — написан для Шаблона. Статус: `active` или `in-progress`.
 
@@ -83,3 +83,9 @@
 | [ask](skills/ask/SKILL.md) | Спросить, какой скилл или флоу подходит к ситуации (роутер по скиллам) | авто | свой | active |
 | [init-project](skills/init-project/SKILL.md) | Инициализация и обновление Проекта из Шаблона: Новый / Добавить / Обновить, настройка трекера | ручной | свой | active |
 | [writing-for-agents](skills/writing-for-agents/SKILL.md) | Писать документы для агентов: скиллы, `AGENTS.md`, `CLAUDE.md` | авто | matt | active |
+
+## Только Шаблон
+
+| Скилл | Когда использовать | Запуск | Источник | Статус |
+|---|---|---|---|---|
+| [release](skills/release/SKILL.md) | Выпуск новой версии Шаблона: план SemVer, черновик заметок, релизный коммит, тег и push | ручной | свой | active |

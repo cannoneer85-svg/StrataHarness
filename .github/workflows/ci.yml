@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  pr-title:
+    name: Check PR Title
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Validate PR title against Conventional Commits
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        shell: pwsh
+        run: |
+          $title = $env:PR_TITLE
+          if ([string]::IsNullOrWhiteSpace($title)) {
+              Write-Host "::error::Pull request title is empty."
+              exit 1
+          }
+
+          $cleanTitle = ($title -replace '\r?\n', ' ').Trim()
+          $pattern = '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9_\-\./]+\))?!?: .+'
+
+          Write-Host "Checking PR title: '$cleanTitle'"
+
+          if ($cleanTitle -cmatch $pattern) {
+              Write-Host "OK: PR title conforms to Conventional Commits."
+              exit 0
+          } else {
+              Write-Host "::error::PR title '$cleanTitle' does not conform to Conventional Commits specification."
+              Write-Host ""
+              Write-Host "PR titles must follow the format:"
+              Write-Host "  <type>[optional scope][optional !]: <description>"
+              Write-Host ""
+              Write-Host "Allowed types:"
+              Write-Host "  feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
+              Write-Host ""
+              Write-Host "Examples:"
+              Write-Host "  feat: add support for GitLab mirrors"
+              Write-Host "  fix(init): handle paths with spaces"
+              Write-Host "  docs: update contributing guide"
+              Write-Host "  feat(api)!: breaking change to release script contract"
+              Write-Host ""
+              Write-Host "Please edit the pull request title in the GitHub UI to fix this check."
+              exit 1
+          }
+
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install Pester
+        shell: pwsh
+        run: |
+          Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -SkipPublisherCheck -Scope CurrentUser
+
+      - name: Validate template
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File .agents/scripts/Test-Template.ps1
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -Command "Invoke-Pester -Path tests -CI -Output Detailed"

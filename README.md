@@ -1,123 +1,153 @@
-# Шаблон проекта с AI-ассистентами (NEW-PROJECT-SETUP)
+# StrataHarness
 
-Репозиторий-шаблон (Template Repository) для организации профессиональной разработки с AI-ассистентами. Содержит проверенный цикл разработки, строгие правила взаимодействия, механизмы контроля контекста и богатый набор специализированных скиллов (skills).
+[English](README.md) | [Русский](README.ru.md)
 
-Поддерживает совместную работу в нескольких AI-окружениях:
-- **Google Antigravity** (нативная поддержка правил и скиллов)
-- **Claude Code** (автоматическое зеркалирование скиллов в `.claude/skills/`, правила через `CLAUDE.md`)
-- **OpenAI Codex / Codex CLI** (правила через компактный `AGENTS.md`)
-- **Cursor** (правила через `AGENTS.md`)
+A production-ready Template repository for software development with autonomous AI coding agents. It provides a structured 6-stage development lifecycle, explicit stop gates, context management protocols, and a comprehensive library of specialized agent skills.
 
----
-
-## Требования
-
-### Для работы с Проектом
-- **git** (версия ≥ 2.30)
-- **PowerShell 7+** (`pwsh`) — используется для запуска автоматизации, скриптов инициализации, обновления и валидации.
-
-### Только для разработки Шаблона
-- **Pester 5+** — фреймворк тестирования PowerShell (`Install-Module Pester -MinimumVersion 5.0.0`). Необходим только разработчикам шаблона для прогона тестов в `/tests/`. Конечным проектам не требуется.
+Supported AI agent environments:
+- **Google Antigravity** (native support for rules and skills)
+- **Claude Code** (automated skills mirroring into `.claude/skills/`, rules via `CLAUDE.md`)
+- **OpenAI Codex / Codex CLI** (rules via compact `AGENTS.md`)
+- **Cursor** (rules via `AGENTS.md`)
 
 ---
 
-## Создание нового Проекта
+## Requirements
 
-1. **Создайте репозиторий из шаблона:**
-   - Нажмите **«Use this template»** в интерфейсе GitHub или клонируйте репозиторий:
+### For Projects using this Template
+- **git** (version ≥ 2.30)
+- **PowerShell 7+** (`pwsh`) — used for automation scripts, initialization, updates, and integrity checks across Windows, macOS, and Linux.
+
+### For Template Development only
+- **Pester 5+** — PowerShell testing framework (`Install-Module Pester -MinimumVersion 5.0.0`). Only needed by template maintainers to execute tests in `tests/`. Not needed by downstream projects.
+
+---
+
+## Creating a New Project
+
+1. **Create a repository from the template:**
+   - Click **"Use this template"** on GitHub, or clone the repository using a specific release tag:
      ```powershell
-     git clone <url-шаблона> my-project
+     git clone --branch v1.0.0 https://github.com/cannoneer85-svg/StrataHarness.git my-project
      cd my-project
      ```
-2. **Инициализируйте проект:**
-   - В чате с агентом введите команду: `/init-project`
-   - Либо запустите скрипт напрямую в PowerShell:
+2. **Initialize the project:**
+   - In your agent session, type `/init-project`
+   - Or run the script directly from your terminal:
      ```powershell
      pwsh -NoProfile -File .agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode New -Tracker local
      ```
 
-Что произойдёт в режиме `New`:
-- Удалятся Метадокументы разработки самого Шаблона (`tests/`, `docs/dry-run-checklist.md`, спеки и ADR шаблона).
-- Документы заменятся чистыми скелетами для нового проекта (`README.md`, `.agents/CONTEXT.md`, `CODING_STANDARDS.md`, `docs/handoff/LATEST.md`).
-- В заголовке Реестра скиллов зафиксируются версия и источник шаблона.
-- Настроится локальный трекер задач (`.scratch/<feature>/issues/`).
+### What happens in `New` mode
+- Removes Template development metadata and release files (`tests/`, `docs/dry-run-checklist.md`, template specs and ADRs, `LICENSE`, `CHANGELOG.md`, `VERSION`, `.github/`, `README.ru.md`, `CONTRIBUTING.md`, `SECURITY.md`, `docs/releasing.md`, and the `release` skill).
+- Preserves [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+- Sets up clean starter skeletons for your project (`README.md`, [`.agents/CONTEXT.md`](.agents/CONTEXT.md), `CODING_STANDARDS.md`, [`docs/handoff/LATEST.md`](docs/handoff/LATEST.md)).
+- Records the template version (`vX.Y.Z (<sha>)`) and source in the Skill Registry header.
+- Configures the task tracker (e.g. local tracker in `.scratch/<feature>/issues/`).
 
 ---
 
-## Режимы работы `Initialize-Project.ps1`
+## `Initialize-Project.ps1` Modes
 
-Скрипт [.agents/skills/init-project/scripts/Initialize-Project.ps1](.agents/skills/init-project/scripts/Initialize-Project.ps1) поддерживает 4 режима:
+The initialization script ([`.agents/skills/init-project/scripts/Initialize-Project.ps1`](.agents/skills/init-project/scripts/Initialize-Project.ps1)) supports 4 modes:
 
-| Режим | Назначение | Пример команды |
+| Mode | Purpose | Example Command |
 |---|---|---|
-| **New** | Создание чистого проекта из шаблона (удаление мета-файлов, разворачивание каркасов). | `pwsh -NoProfile -File .agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode New -Tracker local` |
-| **Adopt** | Подключение правил и скиллов к существующему коду без перезаписи файлов пользователя. Выводит отчёт о конфликтах и обновляет `.gitignore`. | `pwsh -NoProfile -File <путь-к-шаблону>/.agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode Adopt -RepoRoot . -Tracker local` |
-| **Update** | Обновление правил и скиллов в проекте из свежей версии Шаблона. Без `-Apply` показывает diff (dry-run); с `-Apply` применяет изменения. | `pwsh -NoProfile -File <путь-к-шаблону>/.agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode Update -RepoRoot . -Apply` |
-| **SetTracker** | Смена используемого трекера задач (`local`, `github` или `gitlab`). | `pwsh -NoProfile -File .agents/skills/init-project/scripts/Initialize-Project.ps1 -Tracker github` |
+| **New** | Create a clean project from the template (strips meta files, installs skeletons). | `pwsh -NoProfile -File .agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode New -Tracker local` |
+| **Adopt** | Adopt skills and rules into an existing codebase without overwriting user files. Reports conflicts and updates `.gitignore`. | `pwsh -NoProfile -File <template-path>/.agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode Adopt -RepoRoot . -Tracker local` |
+| **Update** | Update rules and skills in an existing project from a newer template version. Without `-Apply`, shows diff and changelog (dry-run); with `-Apply`, applies changes. | `pwsh -NoProfile -File <template-path>/.agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode Update -RepoRoot . -Apply` |
+| **SetTracker** | Switch task tracker provider (`local`, `github`, or `gitlab`). | `pwsh -NoProfile -File .agents/skills/init-project/scripts/Initialize-Project.ps1 -Tracker github` |
 
-Все режимы идемпотентны и безопасны для повторного запуска.
+All modes are idempotent and safe to re-run.
 
 ---
 
-## Процесс разработки (Workflow Summary)
+## Development Lifecycle (Workflow Summary)
 
-Поведение агента определяется правилами в [AGENTS.md](AGENTS.md) (для Claude Code зеркалируется через [CLAUDE.md](CLAUDE.md)).
+Agent behavior is governed by strict rules in [`AGENTS.md`](AGENTS.md) (mirrored for Claude Code in [`CLAUDE.md`](CLAUDE.md)).
 
 ```mermaid
 flowchart TD
-    Step0["Шаг 0: Классификация (Type + Category)"] --> SG0{"Стоп-гейт"}
-    SG0 -->|"Подтверждено"| Stage1["1. Интервью (grill-with-docs)"]
-    Stage1 --> SG1{"Стоп-гейт"}
-    SG1 -->|"Minor"| Stage4["4. Реализация (implement / TDD)"]
-    SG1 -->|"Feature / Epic"| Stage2["2. Спецификация (to-spec)"]
-    Stage2 --> SG2{"Стоп-гейт"}
-    SG2 --> Stage3["3. Тикеты (to-tickets)"]
-    Stage3 --> SG3{"Стоп-гейт"}
+    Step0["Step 0: Classification (Type + Category)"] --> SG0{"Stop gate"}
+    SG0 -->|"Approved"| Stage1["1. Interview (grill-with-docs)"]
+    Stage1 --> SG1{"Stop gate"}
+    SG1 -->|"Minor"| Stage4["4. Implementation (implement / TDD)"]
+    SG1 -->|"Feature / Epic"| Stage2["2. Specification (to-spec)"]
+    Stage2 --> SG2{"Stop gate"}
+    SG2 --> Stage3["3. Tickets (to-tickets)"]
+    Stage3 --> SG3{"Stop gate"}
     SG3 --> Stage4
-    Stage4 --> SG4{"Стоп-гейт"}
-    SG4 --> Stage5["5. Ревью (code-review)"]
-    Stage5 --> SG5{"Стоп-гейт"}
-    SG5 -->|"Команда пользователя"| Stage6["6. Закрытие (close-task)"]
+    Stage4 --> SG4{"Stop gate"}
+    SG4 --> Stage5["5. Review (code-review)"]
+    Stage5 --> SG5{"Stop gate"}
+    SG5 -->|"User close command"| Stage6["6. Close (close-task)"]
 ```
 
-### 1. Шаг 0 — Классификация до начала работы
-В первом сообщении агент объявляет **Тип** и **Категорию** с однострочным обоснованием и ждёт подтверждения пользователя:
-- **Тип:**
-  - `Development` — меняет код, конфигурацию или тесты.
-  - `Analysis` — результатом является документ исследования в `docs/analysis/`, код не меняется.
-- **Категория (для Development):**
-  - `Minor` — 1–2 файла, один модуль, нет новых сущностей и интеграций.
-  - `Feature` — одна подсистема, новый экран/эндпоинт/таблица, интеграция с известным API.
-  - `Epic` — несколько модулей, смена базовой архитектуры/контрактов, много неизвестных.
-  - `Туман (Fog)` — путь к результату не виден; направляется в `wayfinder` для снятия неопределённости.
+### 1. Step 0 — Classification Before Any Work
+In the initial response, the agent announces the **Type** and **Category** with a one-line justification and waits for user confirmation:
+- **Type:**
+  - `Development` — changes code, configuration, or tests.
+  - `Analysis` — outputs research in `docs/analysis/`, leaving code untouched.
+- **Category (for Development):**
+  - `Minor` — 1–2 files, single module, no new entities or integrations.
+  - `Feature` — one subsystem, new screen/endpoint/entity, known API integration.
+  - `Epic` — multiple modules, core architecture changes, many unknowns.
+  - `Fog (Туман)` — path is unclear; routed to `wayfinder` to resolve ambiguity.
 
-### 2. Маршруты и квоты интервью
-- **Minor:** 1 раунд интервью (2–4 вопроса) → реализация In-Place → ревью → закрытие.
-- **Feature:** ≥ 2 раунда интервью (6–8 вопросов) → спецификация в `docs/specs/` → тикеты в `.scratch/<feature>/issues/` с графом зависимостей `TICKETS.md` → реализация → ревью → закрытие.
-- **Epic:** ≥ 3 раунда интервью (10–12+ вопросов) → спецификация → тикеты → реализация через **Оркестратор** (отдельные субагенты по очереди с изолированным брифом) → ревью → закрытие.
-- **Анализ:** 1 раунд (4 вопроса) → сбор данных → черновик в `docs/analysis/` → согласование → закрытие.
+### 2. Routes and Interview Quotas
+- **Minor:** 1 interview round (2–4 questions) → In-Place implementation → review → close.
+- **Feature:** ≥ 2 interview rounds (6–8 questions) → specification in `docs/specs/` → tickets in `.scratch/<feature>/issues/` with dependency graph `TICKETS.md` → implementation → review → close.
+- **Epic:** ≥ 3 interview rounds (10–12+ questions) → specification → tickets → Orchestrator implementation (isolated subagents per ticket) → review → close.
+- **Analysis:** 1 short round (4 questions) → research → draft in `docs/analysis/` → review → close.
 
-### 3. Стоп-гейты (Stop Gates)
-- **Один этап за один ответ:** агент никогда не перескакивает через этапы и ждёт подтверждения перед переходом к следующему шагу.
-- **Жёсткий guardrail:** агент ни при каких условиях не коммитит, не очищает `.scratch/` и не завершает задачу без явной текстовой команды пользователя («закрывай задачу», «фиксируй», «делай handoff»).
+### 3. Stop Gates
+- **One stage per turn:** The agent never skips stages and stops to present results at each stop gate, waiting for explicit user approval before proceeding.
+- **Hard Guardrail:** The agent never commits, cleans `.scratch/`, or closes a task without an explicit user command (e.g. «закрывай задачу», «фиксируй», «делай handoff»). The `/release` command is the sole command permitted to push, and ONLY after explicit confirmation at the release stop gate; force-push is strictly prohibited under all circumstances. Other skills (including `/close-task`) never perform `git push`.
 
 ### 4. Handoff vs Close-task
-- **Handoff ([/handoff](.agents/skills/handoff/SKILL.md)):** перенос контекста в новую сессию или фиксация промежуточного состояния. Создаёт документ `docs/handoff/YYYY-MM-DD-<тема>.md`, обновляет `docs/handoff/LATEST.md`, очищает завершённые тикеты. **Не коммитит.**
-- **Close-task ([/close-task](.agents/skills/close-task/SKILL.md)):** полное закрытие задачи после ревью по команде пользователя. Выполняет предварительные проверки тестов, формирует handoff, полностью очищает `.scratch/<feature>/`, делает локальный коммит. **Не делает `git push`** (публикация всегда остаётся за человеком).
+- **Handoff ([`/handoff`](.agents/skills/handoff/SKILL.md)):** Preserves session context into `docs/handoff/YYYY-MM-DD-<topic>.md`, updates `docs/handoff/LATEST.md`, and cleans completed tickets. **Never commits.**
+- **Close-task ([`/close-task`](.agents/skills/close-task/SKILL.md)):** Fully closes a task following successful review upon user command. Runs pre-flight checks, generates handoff, clears `.scratch/<feature>/`, and creates a local commit. **Never pushes.**
 
-### 5. Бюджет контекста (Smart zone)
-- Рабочая зона глубокого контекста составляет **≈120k токенов**.
-- Перед началом написания кода в `/implement` агент оценивает объём задачи по графу тикетов и выбирает стратегию: **In-Place** (в текущем контексте), **Sequential Subagents** (последовательные субагенты с брифом) или **Multi-Session** (разбиение на этапы с handoff между ними).
+### 5. Context Budget (Smart Zone)
+- Working context is kept within the **Smart zone** (≈120k tokens).
+- Prior to coding, the agent chooses an execution strategy: **In-Place** (within current session), **Sequential Subagents** (fresh subagents per ticket), or **Multi-Session** (session handoffs across iterations).
 
 ---
 
-## Навигация и инструменты
+## Template Versioning & Updating
 
-- **Маршрутизатор скиллов:** [`/ask`](.agents/skills/ask/SKILL.md) — интерактивный помощник по выбору подходящего скилла под задачу.
-- **Реестр скиллов:** [`.agents/SKILLS.md`](.agents/SKILLS.md) — полный список всех зарегистрированных скиллов с метаданными.
-- **Глоссарий понятий:** [`.agents/CONTEXT.md`](.agents/CONTEXT.md) — единые термины процесса и проекта.
-- **Архитектурные решения (ADR):** [`docs/adr/`](docs/adr/) — журнал принятых архитектурных решений.
-- **Трекер задач:** [`docs/agents/issue-tracker.md`](docs/agents/issue-tracker.md) — формат локального трекера задач.
-- **Зеркалирование для Claude Code:** [`.agents/scripts/Sync-ClaudeSkills.ps1`](.agents/scripts/Sync-ClaudeSkills.ps1).
-- **Валидатор целостности Шаблона:** [`.agents/scripts/Test-Template.ps1`](.agents/scripts/Test-Template.ps1).
-- **Чек-лист пробного прогона (Seam D):** [`docs/dry-run-checklist.md`](docs/dry-run-checklist.md).
+The template uses [Semantic Versioning (SemVer)](https://semver.org/):
+- Version source of truth is the [`VERSION`](VERSION) file (`X.Y.Z`) and annotated git tags (`vX.Y.Z`).
+- Changelog is maintained in [`CHANGELOG.md`](CHANGELOG.md).
+
+### Updating a Downstream Project
+To update an existing project with improvements, bug fixes, or new skills from this Template:
+
+1. Fetch or clone the target template release tag:
+   ```powershell
+   git clone --branch v1.1.0 https://github.com/cannoneer85-svg/StrataHarness.git ../template-release
+   ```
+2. Preview the changes (dry-run):
+   ```powershell
+   pwsh -NoProfile -File ../template-release/.agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode Update -RepoRoot .
+   ```
+   The script inspects your recorded `template-version`, displays the target version, prints the relevant CHANGELOG excerpt for the versions in-between, and flags any MAJOR breaking changes.
+3. Apply the update:
+   ```powershell
+   pwsh -NoProfile -File ../template-release/.agents/skills/init-project/scripts/Initialize-Project.ps1 -Mode Update -RepoRoot . -Apply
+   ```
+
+---
+
+## Navigation & Documentation
+
+- **Skill Router:** [`/ask`](.agents/skills/ask/SKILL.md) — interactive skill finder.
+- **Skill Registry:** [`.agents/SKILLS.md`](.agents/SKILLS.md) — complete catalog of registered skills and metadata.
+- **Glossary:** [`.agents/CONTEXT.md`](.agents/CONTEXT.md) — unified terms and domain concepts.
+- **Architectural Decision Records (ADRs):** [`docs/adr/`](docs/adr/) — architecture decisions log.
+- **Release Automation:** [`docs/releasing.md`](docs/releasing.md) — release workflow, bump rules, and GitHub setup.
+- **Contributing Guide:** [`CONTRIBUTING.md`](CONTRIBUTING.md) — contribution guidelines, Conventional Commits, and PR checklist.
+- **Security Policy:** [`SECURITY.md`](SECURITY.md) — vulnerability reporting and supported versions.
+- **License:** [`LICENSE`](LICENSE) — MIT License.
+- **Third-Party Notices:** [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) — credits and licenses for adapted skills.
+- **Russian Documentation:** [`README.ru.md`](README.ru.md) — full Russian version of this guide.

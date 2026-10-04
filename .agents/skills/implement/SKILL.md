@@ -37,7 +37,7 @@ Multi-Session wins whenever a human check is needed; otherwise take the first ro
 
 As the Orchestrator you dispatch tickets and verify results. Your edits are limited to ticket Status fields, `TICKETS.md`, the Brief, and housekeeping; product code and tests are written only by implementer subagents, even for a one-line fix.
 
-**Once, before the first ticket:** write the Brief from [references/brief-template.md](references/brief-template.md) to `.scratch/<feature>/BRIEF.md`. It carries everything the tickets share; the subagent sees nothing of this conversation.
+**Once, before the first ticket:** write the Brief from [references/brief-template.md](references/brief-template.md) to `.scratch/<feature>/BRIEF.md`. It carries everything the tickets share; the subagent sees nothing of this conversation. Keep it lean: prescribe ONLY targeted test commands per seam/ticket, never a blanket full test suite command per ticket, and forbid subagents from running baseline test suites on startup. The full test suite runs once at completion (§5).
 
 **Spawning a subagent** — use the harness's built-in tool with a generic subagent:
 
@@ -49,9 +49,9 @@ Subagents run one at a time, in this workspace, on the current branch — no wor
 
 **Loop** until every ticket is `done` or a stop condition fires:
 
-1. **Pick** the next frontier ticket — all its blockers `done`. Set it `in-progress`.
+1. **Pick & Mark in-progress** — select the next frontier ticket whose blockers are all `done`. Update its issue file (`Status: in-progress`) AND `.scratch/<feature>/TICKETS.md` (set node class to `inprogress` and table status to `in-progress`) **before calling `invoke_subagent`**. Never spawn a subagent while the ticket still shows `ready-for-agent`.
 2. **Spawn** one implementer. The prompt holds: the Brief's path, the ticket's path, and per-ticket notes (what earlier tickets produced that this one builds on, user decisions it depends on, known pitfalls). Wait for its report in the format of [references/report-template.md](references/report-template.md).
-3. **Verify** yourself rather than trusting the report: re-run the ticket's tests and the project's validators, and compare `git status` / `git diff` with the ticket's scope. Delete stray artifacts the run left behind, such as test result files.
+3. **Verify** yourself rather than trusting the report: re-run the ticket's targeted tests and relevant validators (do not run the full repository test suite here), and compare `git status` / `git diff` with the ticket's scope. Delete stray artifacts the run left behind, such as test result files.
 4. **Pass** — green and within scope: set the ticket `done` and continue with step 1 without stopping for the user.
 5. **Retry once** — red or out of scope: spawn a fresh implementer with the same Brief, the failure log, and your remarks.
 6. **Stop and report to the user** on a second failure of the same ticket, on a `blocked` report or an open question only the user can answer, or on any deviation from the spec. These are the only early stops.

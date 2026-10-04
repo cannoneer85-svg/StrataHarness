@@ -38,6 +38,13 @@ BeforeAll {
             'docs/analysis/2026-10-03-audit.md'  = '# Analysis'
             'docs/research/sample.md'            = '# Research'
             'tests/Sample.Tests.ps1'             = '# Tests'
+            'LICENSE'                            = "MIT License`n"
+            '.github/workflows/ci.yml'           = "name: CI`n"
+            'README.ru.md'                       = "# Описание`n"
+            'CONTRIBUTING.md'                    = "# Contributing`n"
+            'SECURITY.md'                        = "# Security Policy`n"
+            'docs/releasing.md'                  = "# Release Process`n"
+            'THIRD_PARTY_NOTICES.md'             = "# Third Party Notices`n"
         }
         foreach ($rel in $metaFiles.Keys) {
             $p = Join-Path $resolvedRoot $rel
@@ -74,6 +81,20 @@ BeforeAll {
         return $resolvedRoot
     }
 
+    function Initialize-GitRepoFixture {
+        param(
+            [string]$Path,
+            [string]$UserName = 'Tester',
+            [string]$UserEmail = 'tester@example.com'
+        )
+        & git -C $Path init --quiet
+        & git -C $Path config user.name $UserName
+        & git -C $Path config user.email $UserEmail
+        & git -C $Path config commit.gpgsign false
+        & git -C $Path config core.autocrlf false
+        & git -C $Path config advice.crlf false
+    }
+
     function New-UpdateFixture {
         $tmpDir = (Join-Path $TestDrive ([guid]::NewGuid().ToString('N')))
         New-Item -ItemType Directory -Path $tmpDir -Force | Out-Null
@@ -86,9 +107,7 @@ BeforeAll {
         $projectResolved = (Resolve-Path -LiteralPath $projectDir).Path
 
         # Initialize template git repo
-        & git -C $templateResolved init --quiet
-        & git -C $templateResolved config user.name "TestTemplate"
-        & git -C $templateResolved config user.email "test@example.com"
+        Initialize-GitRepoFixture -Path $templateResolved -UserName 'TestTemplate' -UserEmail 'test@example.com'
 
         # Copy baseline files needed for scripts and manifest
         $filesToCopy = @(
@@ -123,7 +142,11 @@ BeforeAll {
 | [skill-to-remove](skills/skill-to-remove/SKILL.md) | Test skill | авто | свой | active |
 | [skill-local-edit](skills/skill-local-edit/SKILL.md) | Test skill | авто | свой | active |
 "@
-        $skillsContent = $skillsContent.TrimEnd() + "`n" + $fixtureSkillsRows + "`n"
+        if ($skillsContent -match '(?m)^##\s+Только Шаблон\b') {
+            $skillsContent = [regex]::Replace($skillsContent, '(?m)^##\s+Только Шаблон\b', "$fixtureSkillsRows`n## Только Шаблон")
+        } else {
+            $skillsContent = $skillsContent.TrimEnd() + "`n" + $fixtureSkillsRows + "`n"
+        }
         Set-Content -LiteralPath $skillsMdPath -Value $skillsContent -Encoding utf8 -NoNewline
 
         # Create specific fixture skills for v1
@@ -207,8 +230,30 @@ Template v2 modified this too
         # Update SKILLS.md in Template v2: remove skill-to-remove, add skill-added-v2
         $skillsContentV2 = Get-Content -LiteralPath $skillsMdPath -Raw -Encoding utf8
         $skillsContentV2 = [regex]::Replace($skillsContentV2, '(?m)^\|\s*\[skill-to-remove\].*$', '')
-        $skillsContentV2 = $skillsContentV2.TrimEnd() + "`n| [skill-added-v2](skills/skill-added-v2/SKILL.md) | Test skill | авто | свой | active |`n"
+        if ($skillsContentV2 -match '(?m)^##\s+Только Шаблон\b') {
+            $skillsContentV2 = [regex]::Replace($skillsContentV2, '(?m)^##\s+Только Шаблон\b', "| [skill-added-v2](skills/skill-added-v2/SKILL.md) | Test skill | авто | свой | active |`n`n## Только Шаблон")
+        } else {
+            $skillsContentV2 = $skillsContentV2.TrimEnd() + "`n| [skill-added-v2](skills/skill-added-v2/SKILL.md) | Test skill | авто | свой | active |`n"
+        }
         Set-Content -LiteralPath $skillsMdPath -Value $skillsContentV2 -Encoding utf8 -NoNewline
+
+        # Set VERSION and CHANGELOG.md in Template v2
+        Set-Content -LiteralPath (Join-Path $templateResolved 'VERSION') -Value "2.0.0`n" -Encoding utf8
+        Set-Content -LiteralPath (Join-Path $templateResolved 'CHANGELOG.md') -Value @"
+# Changelog
+
+All notable changes documented here.
+
+## [Unreleased]
+
+## [2.0.0] - 2026-11-01 - Major Release
+### Added
+- skill-added-v2
+
+## [1.0.0] - 2026-10-04 - Initial Release
+### Added
+- initial template skills
+"@ -Encoding utf8
 
         # Commit Template v2
         & git -C $templateResolved add .
@@ -283,7 +328,34 @@ Describe 'Initialize-Project.ps1 -Mode New' {
 
         $skillsText = Get-Content -LiteralPath (Join-Path $root '.agents/SKILLS.md') -Raw -Encoding utf8
         $skillsText | Should -Match '- \*\*template-source:\*\* `https://github\.com/my-org/my-template`'
-        $skillsText | Should -Match '- \*\*template-version:\*\* `\d{4}-\d{2}-\d{2}'
+        $skillsText | Should -Match '- \*\*template-version:\*\* `v0\.0\.0'
+    }
+
+    It 'records vX.Y.Z (<sha>) in .agents/SKILLS.md when template is a git repo with VERSION' {
+        $root = New-FixtureRepo
+        Initialize-GitRepoFixture -Path $root
+        & git -C $root add .
+        & git -C $root commit -m "Initial commit" --quiet
+        $sha = (& git -C $root rev-parse --short HEAD).Trim()
+
+        & $script:InitScript -Mode New -RepoRoot $root -TemplateSource 'https://github.com/my-org/my-template'
+
+        $skillsText = Get-Content -LiteralPath (Join-Path $root '.agents/SKILLS.md') -Raw -Encoding utf8
+        $skillsText | Should -Match "- \*\*template-version:\*\* ``v0\.0\.0 \($sha\)``"
+    }
+
+    It 'falls back to YYYY-MM-DD <sha> in New mode when VERSION does not exist' {
+        $root = New-FixtureRepo
+        Remove-Item -LiteralPath (Join-Path $root 'VERSION') -Force
+        Initialize-GitRepoFixture -Path $root
+        & git -C $root add .
+        & git -C $root commit -m "Initial commit" --quiet
+        $sha = (& git -C $root rev-parse --short HEAD).Trim()
+
+        & $script:InitScript -Mode New -RepoRoot $root -TemplateSource 'https://github.com/my-org/my-template'
+
+        $skillsText = Get-Content -LiteralPath (Join-Path $root '.agents/SKILLS.md') -Raw -Encoding utf8
+        $skillsText | Should -Match "- \*\*template-version:\*\* ``\d{4}-\d{2}-\d{2} $sha``"
     }
 
     It 'leaves payload files untouched' {
@@ -329,6 +401,43 @@ Describe 'Initialize-Project.ps1 -Mode New' {
         Test-Path -LiteralPath (Join-Path $root 'tests') | Should -BeFalse
         $readmeContent = Get-Content -LiteralPath (Join-Path $root 'README.md') -Raw -Encoding utf8
         $readmeContent | Should -Match 'Разработка с AI-агентами'
+    }
+
+    It 'cleans all release Meta files, deletes release skill, strips release from SKILLS.md, keeps THIRD_PARTY_NOTICES.md, and passes Test-Template' {
+        $root = New-FixtureRepo
+        Initialize-GitRepoFixture -Path $root
+        Set-Content -LiteralPath (Join-Path $root 'VERSION') -Value "1.2.3`n" -Encoding utf8
+        & git -C $root add .
+        & git -C $root commit -m "Initial template commit" --quiet
+        $sha = (& git -C $root rev-parse --short HEAD).Trim()
+
+        & $script:InitScript -Mode New -RepoRoot $root -TemplateSource 'https://github.com/cannoneer85-svg/test-project'
+
+        # Release machinery files removed
+        Test-Path -LiteralPath (Join-Path $root 'CHANGELOG.md') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $root 'VERSION') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $root 'LICENSE') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $root '.github') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $root 'README.ru.md') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $root 'CONTRIBUTING.md') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $root 'SECURITY.md') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $root 'docs/releasing.md') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $root '.agents/skills/release') | Should -BeFalse
+
+        # THIRD_PARTY_NOTICES.md preserved
+        Test-Path -LiteralPath (Join-Path $root 'THIRD_PARTY_NOTICES.md') | Should -BeTrue
+        (Get-Content -LiteralPath (Join-Path $root 'THIRD_PARTY_NOTICES.md') -Raw -Encoding utf8) | Should -Match 'Third Party Notices'
+
+        # SKILLS.md template-version recorded from VERSION before cleaning, release skill and header removed
+        $skillsContent = Get-Content -LiteralPath (Join-Path $root '.agents/SKILLS.md') -Raw -Encoding utf8
+        $skillsContent | Should -Match "- \*\*template-version:\*\* ``v1\.2\.3 \($sha\)``"
+        $skillsContent | Should -Not -Match 'Только Шаблон'
+        $skillsContent | Should -Not -Match 'skills/release/SKILL\.md'
+
+        # Test-Template.ps1 in new project exits 0
+        $testOutput = & (Join-Path $root '.agents/scripts/Test-Template.ps1')
+        $LASTEXITCODE | Should -Be 0
+        ($testOutput | Where-Object { $_ -match '^OK:' }) | Should -Not -BeNullOrEmpty
     }
 }
 
@@ -404,11 +513,35 @@ Describe 'Initialize-Project.ps1 -Mode Adopt' {
 
     It 'records template-version and template-source in target repo .agents/SKILLS.md' {
         $target = New-TargetRepo
-        & $script:InitScript -Mode Adopt -RepoRoot $target -TemplateSource $script:TemplateRoot -TemplateVersion '2026-10-03 testver'
+        & $script:InitScript -Mode Adopt -RepoRoot $target -TemplateSource $script:TemplateRoot
 
         $skillsText = Get-Content -LiteralPath (Join-Path $target '.agents/SKILLS.md') -Raw -Encoding utf8
         $skillsText | Should -Match "- \*\*template-source:\*\* ``$([regex]::Escape($script:TemplateRoot))``"
-        $skillsText | Should -Match '- \*\*template-version:\*\* `2026-10-03 testver`'
+        $skillsText | Should -Match '- \*\*template-version:\*\* `v0\.0\.0'
+    }
+
+    It 'records explicit vX.Y.Z (<sha>) in target repo when -TemplateVersion is provided' {
+        $target = New-TargetRepo
+        & $script:InitScript -Mode Adopt -RepoRoot $target -TemplateSource $script:TemplateRoot -TemplateVersion 'v1.2.3 (abc1234)'
+
+        $skillsText = Get-Content -LiteralPath (Join-Path $target '.agents/SKILLS.md') -Raw -Encoding utf8
+        $skillsText | Should -Match '- \*\*template-version:\*\* `v1\.2\.3 \(abc1234\)`'
+    }
+
+    It 'falls back to legacy date in Adopt mode when VERSION does not exist in template source' {
+        $nonVerTemplate = (Join-Path $TestDrive ([guid]::NewGuid().ToString('N')))
+        New-Item -ItemType Directory -Path $nonVerTemplate -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $script:TemplateRoot 'AGENTS.md') -Destination (Join-Path $nonVerTemplate 'AGENTS.md')
+        Copy-Item -LiteralPath (Join-Path $script:TemplateRoot '.agents') -Destination $nonVerTemplate -Recurse -Force
+        if (Test-Path -LiteralPath (Join-Path $nonVerTemplate 'VERSION')) {
+            Remove-Item -LiteralPath (Join-Path $nonVerTemplate 'VERSION') -Force
+        }
+
+        $target = New-TargetRepo
+        & $script:InitScript -Mode Adopt -RepoRoot $target -TemplateSource $nonVerTemplate
+
+        $skillsText = Get-Content -LiteralPath (Join-Path $target '.agents/SKILLS.md') -Raw -Encoding utf8
+        $skillsText | Should -Match '- \*\*template-version:\*\* `\d{4}-\d{2}-\d{2}'
     }
 
     It 'is idempotent on repeat runs without making any changes' {
@@ -436,6 +569,57 @@ Describe 'Initialize-Project.ps1 -Mode Adopt' {
             $filesAfter.ContainsKey($rel) | Should -BeTrue
             $filesAfter[$rel] | Should -Be $filesBefore[$rel]
         }
+    }
+
+    It 'does not copy release skill or release Meta files, copies THIRD_PARTY_NOTICES.md, and strips release from SKILLS.md' {
+        # Create template source with release files and THIRD_PARTY_NOTICES.md
+        $tplSource = (Join-Path $TestDrive ([guid]::NewGuid().ToString('N')))
+        New-Item -ItemType Directory -Path $tplSource -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $script:TemplateRoot 'AGENTS.md') -Destination (Join-Path $tplSource 'AGENTS.md')
+        Copy-Item -LiteralPath (Join-Path $script:TemplateRoot '.gitattributes') -Destination (Join-Path $tplSource '.gitattributes')
+        Copy-Item -LiteralPath (Join-Path $script:TemplateRoot '.agents') -Destination $tplSource -Recurse -Force
+
+        # Seed release meta files and THIRD_PARTY_NOTICES.md in template
+        Set-Content -LiteralPath (Join-Path $tplSource 'CHANGELOG.md') -Value "# Changelog`n" -Encoding utf8
+        Set-Content -LiteralPath (Join-Path $tplSource 'VERSION') -Value "1.0.0`n" -Encoding utf8
+        Set-Content -LiteralPath (Join-Path $tplSource 'LICENSE') -Value "MIT License`n" -Encoding utf8
+        New-Item -ItemType Directory -Path (Join-Path $tplSource '.github') -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $tplSource '.github' 'ci.yml') -Value "name: CI`n" -Encoding utf8
+        Set-Content -LiteralPath (Join-Path $tplSource 'README.ru.md') -Value "# Ru`n" -Encoding utf8
+        Set-Content -LiteralPath (Join-Path $tplSource 'CONTRIBUTING.md') -Value "# Contrib`n" -Encoding utf8
+        Set-Content -LiteralPath (Join-Path $tplSource 'SECURITY.md') -Value "# Sec`n" -Encoding utf8
+        $docRelDir = Join-Path $tplSource 'docs'
+        if (-not (Test-Path -LiteralPath $docRelDir)) { New-Item -ItemType Directory -Path $docRelDir -Force | Out-Null }
+        Set-Content -LiteralPath (Join-Path $docRelDir 'releasing.md') -Value "# Rel`n" -Encoding utf8
+        Set-Content -LiteralPath (Join-Path $tplSource 'THIRD_PARTY_NOTICES.md') -Value "# Third Party Notices`n" -Encoding utf8
+
+        $target = New-TargetRepo
+        & $script:InitScript -Mode Adopt -RepoRoot $target -TemplateSource $tplSource
+
+        # Release meta files not copied
+        Test-Path -LiteralPath (Join-Path $target 'CHANGELOG.md') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $target 'VERSION') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $target 'LICENSE') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $target '.github') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $target 'README.ru.md') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $target 'CONTRIBUTING.md') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $target 'SECURITY.md') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $target 'docs/releasing.md') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $target '.agents/skills/release') | Should -BeFalse
+
+        # THIRD_PARTY_NOTICES.md copied
+        Test-Path -LiteralPath (Join-Path $target 'THIRD_PARTY_NOTICES.md') | Should -BeTrue
+        (Get-Content -LiteralPath (Join-Path $target 'THIRD_PARTY_NOTICES.md') -Raw -Encoding utf8) | Should -Match 'Third Party Notices'
+
+        # SKILLS.md does not contain release skill or Только Шаблон section
+        $skillsContent = Get-Content -LiteralPath (Join-Path $target '.agents/SKILLS.md') -Raw -Encoding utf8
+        $skillsContent | Should -Not -Match 'Только Шаблон'
+        $skillsContent | Should -Not -Match 'skills/release/SKILL\.md'
+
+        # Test-Template.ps1 exits 0
+        $testOutput = & (Join-Path $target '.agents/scripts/Test-Template.ps1')
+        $LASTEXITCODE | Should -Be 0
+        ($testOutput | Where-Object { $_ -match '^OK:' }) | Should -Not -BeNullOrEmpty
     }
 }
 
@@ -567,7 +751,78 @@ Describe 'Initialize-Project.ps1 -Mode Update' {
 
         # 5. Template version is updated in .agents/SKILLS.md
         $skillsContent = Get-Content -LiteralPath (Join-Path $fix.ProjectRoot '.agents' 'SKILLS.md') -Raw -Encoding utf8
-        $skillsContent | Should -Match "- \*\*template-version:\*\* ``.*$($fix.V2Sha)``"
+        $skillsContent | Should -Match "- \*\*template-version:\*\* ``v2\.0\.0 \($($fix.V2Sha)\)``"
+    }
+
+    It 'displays Current and Target versions, warns on MAJOR bump, and outputs changelog excerpt for legacy project' {
+        $fix = New-UpdateFixture
+        $output = & $script:InitScript -Mode Update -RepoRoot $fix.ProjectRoot
+
+        ($output | Where-Object { $_ -match "^Current version:\s+2026-10-03\s+$($fix.V1Sha)" }) | Should -Not -BeNullOrEmpty
+        ($output | Where-Object { $_ -match "^Target version:\s+v2\.0\.0\s+\($($fix.V2Sha)\)" }) | Should -Not -BeNullOrEmpty
+        ($output | Where-Object { $_ -match 'WARNING: Target version \(2\.0\.0\) introduces a MAJOR version bump over current version \(2026-10-03\)' }) | Should -Not -BeNullOrEmpty
+        ($output | Where-Object { $_ -match 'Changelog excerpt' }) | Should -Not -BeNullOrEmpty
+        ($output | Where-Object { $_ -match '## \[2\.0\.0\]' }) | Should -Not -BeNullOrEmpty
+        ($output | Where-Object { $_ -match '## \[1\.0\.0\]' }) | Should -Not -BeNullOrEmpty
+    }
+
+    It 'retrieves base commit sha from vX.Y.Z (<sha>) format' {
+        $fix = New-UpdateFixture
+        # Update SKILLS.md in Project repo to new format with V1Sha
+        $projectSkillsPath = Join-Path $fix.ProjectRoot '.agents' 'SKILLS.md'
+        $projectSkillsContent = Get-Content -LiteralPath $projectSkillsPath -Raw -Encoding utf8
+        $projectSkillsContent = [regex]::Replace($projectSkillsContent, '(?m)^-\s*\*\*template-version:\*\*.*$', "- **template-version:** ``v1.0.0 ($($fix.V1Sha))``")
+        Set-Content -LiteralPath $projectSkillsPath -Value $projectSkillsContent -Encoding utf8 -NoNewline
+
+        $output = & $script:InitScript -Mode Update -RepoRoot $fix.ProjectRoot
+
+        ($output | Where-Object { $_ -match "Base git commit:\s+$($fix.V1Sha)" }) | Should -Not -BeNullOrEmpty
+        ($output | Where-Object { $_ -match 'skill-added-v2' }) | Should -Not -BeNullOrEmpty
+        ($output | Where-Object { $_ -match 'skill-to-modify' }) | Should -Not -BeNullOrEmpty
+        ($output | Where-Object { $_ -match 'skill-to-remove' }) | Should -Not -BeNullOrEmpty
+        ($output | Where-Object { $_ -match 'skill-local-edit' }) | Should -Not -BeNullOrEmpty
+    }
+
+    It 'does not warn on MINOR bump and filters changelog excerpt to (current, target]' {
+        $fix = New-UpdateFixture
+        # Set project version to v2.0.0 ($fix.V1Sha)
+        $projectSkillsPath = Join-Path $fix.ProjectRoot '.agents' 'SKILLS.md'
+        $projectSkillsContent = Get-Content -LiteralPath $projectSkillsPath -Raw -Encoding utf8
+        $projectSkillsContent = [regex]::Replace($projectSkillsContent, '(?m)^-\s*\*\*template-version:\*\*.*$', "- **template-version:** ``v2.0.0 ($($fix.V1Sha))``")
+        Set-Content -LiteralPath $projectSkillsPath -Value $projectSkillsContent -Encoding utf8 -NoNewline
+
+        # Update Template v2 VERSION to 2.1.0 and add section [2.1.0] to CHANGELOG.md
+        Set-Content -LiteralPath (Join-Path $fix.TemplateRoot 'VERSION') -Value "2.1.0`n" -Encoding utf8
+        Set-Content -LiteralPath (Join-Path $fix.TemplateRoot 'CHANGELOG.md') -Value @"
+# Changelog
+
+## [Unreleased]
+
+## [2.1.0] - 2026-11-15 - Minor Feature
+### Added
+- minor-feature-skill
+
+## [2.0.0] - 2026-11-01 - Major Release
+### Added
+- skill-added-v2
+
+## [1.0.0] - 2026-10-04 - Initial Release
+### Added
+- initial template skills
+"@ -Encoding utf8
+
+        & git -C $fix.TemplateRoot add .
+        & git -C $fix.TemplateRoot commit -m "Template v2.1" --quiet
+        $v21Sha = (& git -C $fix.TemplateRoot rev-parse --short HEAD).Trim()
+
+        $output = & $script:InitScript -Mode Update -RepoRoot $fix.ProjectRoot
+
+        ($output | Where-Object { $_ -match "^Current version:\s+v2\.0\.0" }) | Should -Not -BeNullOrEmpty
+        ($output | Where-Object { $_ -match "^Target version:\s+v2\.1\.0\s+\($v21Sha\)" }) | Should -Not -BeNullOrEmpty
+        ($output | Where-Object { $_ -match 'WARNING.*MAJOR' }) | Should -BeNullOrEmpty
+        ($output | Where-Object { $_ -match '## \[2\.1\.0\]' }) | Should -Not -BeNullOrEmpty
+        ($output | Where-Object { $_ -match '## \[2\.0\.0\]' }) | Should -BeNullOrEmpty
+        ($output | Where-Object { $_ -match '## \[1\.0\.0\]' }) | Should -BeNullOrEmpty
     }
 
     It 'is idempotent and reports no pending updates on repeat run after applying clean changes' {
@@ -603,6 +858,63 @@ Describe 'Initialize-Project.ps1 -Mode Update' {
 
         $output = & $script:InitScript -Mode Update -RepoRoot $target -TemplateSource $nonGitTemplate
         ($output | Where-Object { $_ -match 'Conflict: modified locally' -and $_ -match 'AGENTS\.md' }) | Should -Not -BeNullOrEmpty
+    }
+
+    It 'does not copy release skill or release Meta files during Update, but copies THIRD_PARTY_NOTICES.md' {
+        $fix = New-UpdateFixture
+
+        # In Template, add release meta files, release skill, and THIRD_PARTY_NOTICES.md
+        Set-Content -LiteralPath (Join-Path $fix.TemplateRoot 'LICENSE') -Value "MIT License`n" -Encoding utf8
+        Set-Content -LiteralPath (Join-Path $fix.TemplateRoot 'README.ru.md') -Value "# Ru`n" -Encoding utf8
+        Set-Content -LiteralPath (Join-Path $fix.TemplateRoot 'CONTRIBUTING.md') -Value "# Contrib`n" -Encoding utf8
+        Set-Content -LiteralPath (Join-Path $fix.TemplateRoot 'SECURITY.md') -Value "# Sec`n" -Encoding utf8
+        $docRelDir = Join-Path $fix.TemplateRoot 'docs'
+        Set-Content -LiteralPath (Join-Path $docRelDir 'releasing.md') -Value "# Rel`n" -Encoding utf8
+        $ghDir = Join-Path $fix.TemplateRoot '.github'
+        New-Item -ItemType Directory -Path $ghDir -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $ghDir 'ci.yml') -Value "name: CI`n" -Encoding utf8
+        Set-Content -LiteralPath (Join-Path $fix.TemplateRoot 'THIRD_PARTY_NOTICES.md') -Value "# Third Party Notices v2`n" -Encoding utf8
+
+        $relSkillDir = Join-Path $fix.TemplateRoot '.agents' 'skills' 'release'
+        if (-not (Test-Path -LiteralPath $relSkillDir)) {
+            New-Item -ItemType Directory -Path $relSkillDir -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $relSkillDir 'SKILL.md') -Value "---\nname: release\n---\n# Release" -Encoding utf8
+        }
+
+        & git -C $fix.TemplateRoot add .
+        & git -C $fix.TemplateRoot commit -m "Add release files and notices in template" --quiet
+
+        $dryRun = & $script:InitScript -Mode Update -RepoRoot $fix.ProjectRoot
+
+        # Release machinery is NOT reported as Added in Template
+        ($dryRun | Where-Object { $_ -match 'Added in Template.*(?:release|LICENSE|README\.ru|CONTRIBUTING|SECURITY|\.github)' }) | Should -BeNullOrEmpty
+        # THIRD_PARTY_NOTICES.md IS reported as Added in Template
+        ($dryRun | Where-Object { $_ -match 'Added in Template.*THIRD_PARTY_NOTICES\.md' }) | Should -Not -BeNullOrEmpty
+
+        # Apply update
+        & $script:InitScript -Mode Update -RepoRoot $fix.ProjectRoot -Apply
+
+        # Target project does not have release files or release skill
+        Test-Path -LiteralPath (Join-Path $fix.ProjectRoot 'LICENSE') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $fix.ProjectRoot 'README.ru.md') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $fix.ProjectRoot 'CONTRIBUTING.md') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $fix.ProjectRoot 'SECURITY.md') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $fix.ProjectRoot '.github') | Should -BeFalse
+        Test-Path -LiteralPath (Join-Path $fix.ProjectRoot '.agents/skills/release') | Should -BeFalse
+
+        # Target project has THIRD_PARTY_NOTICES.md
+        Test-Path -LiteralPath (Join-Path $fix.ProjectRoot 'THIRD_PARTY_NOTICES.md') | Should -BeTrue
+        (Get-Content -LiteralPath (Join-Path $fix.ProjectRoot 'THIRD_PARTY_NOTICES.md') -Raw -Encoding utf8) | Should -Match 'Third Party Notices v2'
+
+        # Project SKILLS.md does not contain release skill or Только Шаблон section
+        $skillsContent = Get-Content -LiteralPath (Join-Path $fix.ProjectRoot '.agents' 'SKILLS.md') -Raw -Encoding utf8
+        $skillsContent | Should -Not -Match 'Только Шаблон'
+        $skillsContent | Should -Not -Match 'skills/release/SKILL\.md'
+
+        # Test-Template.ps1 in Project exits 0
+        $testOutput = & (Join-Path $fix.ProjectRoot '.agents/scripts/Test-Template.ps1')
+        $LASTEXITCODE | Should -Be 0
+        ($testOutput | Where-Object { $_ -match '^OK:' }) | Should -Not -BeNullOrEmpty
     }
 }
 

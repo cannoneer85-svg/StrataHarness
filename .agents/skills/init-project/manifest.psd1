@@ -13,6 +13,7 @@
         'docs/handoff'
         'docs/analysis'
         '.gitattributes'
+        'THIRD_PARTY_NOTICES.md'
     )
 
     # Meta: Template development artifacts cleaned in New mode, never copied in Adopt/Update.
@@ -24,6 +25,15 @@
         'docs/analysis/*'
         'docs/research/*'
         'tests/'
+        'CHANGELOG.md'
+        'VERSION'
+        'LICENSE'
+        '.github/'
+        'README.ru.md'
+        'CONTRIBUTING.md'
+        'SECURITY.md'
+        'docs/releasing.md'
+        '.agents/skills/release/'
     )
 
     # Reset: files replaced with fresh project skeletons during New mode.

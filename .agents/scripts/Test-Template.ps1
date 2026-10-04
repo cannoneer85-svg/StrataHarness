@@ -12,6 +12,9 @@
          .agents/skills/ask/SKILL.md (if present) and docs/agents/* point to existing paths.
       5. Legacy .agents/AGENTS.md does not exist.
       6. Root AGENTS.md is smaller than 24 KB (24000 bytes), if present.
+      7. (spec 0002, D8) If VERSION exists: it is a valid SemVer (X.Y.Z or X.Y.Z-rc.N); if CHANGELOG.md
+         also exists and has version sections, the top one equals VERSION; with VERSION 0.0.0 there may be
+         no version sections. Without VERSION (a Project) the rule is skipped.
 
     The repository root is resolved relative to this script, so it can be run from any folder.
     Prints every violation and exits with 0 (no violations) or 1 (violations found).
@@ -22,12 +25,16 @@ param()
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+. (Join-Path $PSScriptRoot 'SemVer.ps1')
+
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..' '..')).Path
 $AgentsDir = Join-Path $RepoRoot '.agents'
 $SkillsDir = Join-Path $AgentsDir 'skills'
 $RegistryPath = Join-Path $AgentsDir 'SKILLS.md'
 $RootAgentsPath = Join-Path $RepoRoot 'AGENTS.md'
 $LegacyAgentsPath = Join-Path $AgentsDir 'AGENTS.md'
+$VersionPath = Join-Path $RepoRoot 'VERSION'
+$ChangelogPath = Join-Path $RepoRoot 'CHANGELOG.md'
 $AgentsMdMaxBytes = 24000
 
 $script:Violations = [System.Collections.Generic.List[string]]::new()
@@ -173,6 +180,47 @@ if (Test-Path -LiteralPath $RootAgentsPath -PathType Leaf) {
     }
 } else {
     Write-Output 'SKIP [agents-size] root AGENTS.md does not exist yet.'
+}
+
+# --- Rule 7: VERSION <=> CHANGELOG.md ---------------------------------------------------
+
+if (Test-Path -LiteralPath $VersionPath -PathType Leaf) {
+    $version = ([string](Get-Content -LiteralPath $VersionPath -Raw -Encoding utf8)).Trim()
+    if (-not (Test-SemVer $version)) {
+        Add-Violation 'version' "VERSION contains '$version'; expected X.Y.Z or X.Y.Z-rc.N (no 'v' prefix)."
+    } elseif (Test-Path -LiteralPath $ChangelogPath -PathType Leaf) {
+        $changelogText = [string](Get-Content -LiteralPath $ChangelogPath -Raw -Encoding utf8)
+        $changelogText = [regex]::Replace($changelogText, '(?ms)^[ \t]*(```|~~~).*?^[ \t]*\1[^\n]*$', '')
+        $topSection = [regex]::Matches($changelogText, '(?m)^##\s+\[(?<v>[^\]]+)\]') |
+            ForEach-Object { $_.Groups['v'].Value.Trim() } |
+            Where-Object { $_ -ne 'Unreleased' } |
+            Select-Object -First 1
+        if ($null -eq $topSection) {
+            if ($version -ne '0.0.0') {
+                Add-Violation 'version' "VERSION is $version, but CHANGELOG.md has no version sections."
+            }
+        } elseif ($topSection -cne $version) {
+            Add-Violation 'version' "Top CHANGELOG.md section is [$topSection], but VERSION is $version."
+        }
+    }
+} else {
+    Write-Output 'SKIP [version] VERSION does not exist (Project).'
+}
+
+# --- Rule 8: release skill in 'Только Шаблон' section -----------------------------------
+
+if ($skillFolders -contains 'release') {
+    if (Test-Path -LiteralPath $RegistryPath -PathType Leaf) {
+        $registryText = [string](Get-Content -LiteralPath $RegistryPath -Raw -Encoding utf8)
+        if ($registryText -match '(?ms)##\s+Только Шаблон\s*\r?\n(?<section>.*)') {
+            $templateOnlySection = $Matches['section']
+            if ($templateOnlySection -notmatch '(?m)skills/release/SKILL\.md') {
+                Add-Violation 'release-registry' "The 'release' skill exists, but is not listed in the '## Только Шаблон' section of .agents/SKILLS.md."
+            }
+        } else {
+            Add-Violation 'release-registry' "The 'release' skill exists, but the '## Только Шаблон' section is missing in .agents/SKILLS.md."
+        }
+    }
 }
 
 # --- Report -----------------------------------------------------------------------------

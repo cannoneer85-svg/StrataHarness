@@ -1,4 +1,3 @@
-<!-- Copied from docs/handoff/2026-10-04-open-source-release.md -->
 # Handoff: open-source-release (Подготовка к Open Source и первому релизу)
 
 ## State

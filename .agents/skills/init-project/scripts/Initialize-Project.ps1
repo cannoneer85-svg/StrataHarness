@@ -61,6 +61,29 @@ if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
     $RepoRoot = (Resolve-Path -LiteralPath $RepoRoot).Path
 }
 
+$semVerCandidates = @(
+    (Join-Path $PSScriptRoot '..' '..' '..' 'scripts' 'SemVer.ps1'),
+    (Join-Path $RepoRoot '.agents' 'scripts' 'SemVer.ps1')
+)
+if (-not [string]::IsNullOrWhiteSpace($TemplateSource) -and
+    $TemplateSource -notmatch '^(?:https?|git|ssh)://' -and
+    (Test-Path -LiteralPath $TemplateSource -PathType Container -ErrorAction SilentlyContinue)) {
+    $semVerCandidates += (Join-Path $TemplateSource '.agents' 'scripts' 'SemVer.ps1')
+}
+$semVerLoaded = $false
+foreach ($cand in $semVerCandidates) {
+    if (Test-Path -LiteralPath $cand -PathType Leaf) {
+        . (Resolve-Path -LiteralPath $cand).Path
+        $semVerLoaded = $true
+        break
+    }
+}
+if (-not $semVerLoaded) {
+    if (-not (Get-Command 'Test-SemVer' -ErrorAction SilentlyContinue)) {
+        throw "SemVer helpers (.agents/scripts/SemVer.ps1) not found."
+    }
+}
+
 $SkillRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $ManifestPath = Join-Path $SkillRoot 'manifest.psd1'
 
@@ -123,12 +146,23 @@ function Test-FileContentEqual {
     }
     return $true
 }
- 
+function Remove-RegistryTemplateOnlyContent {
+    param([string]$Text)
+    if ([string]::IsNullOrEmpty($Text)) { return '' }
+    $clean = $Text.Replace("`r`n", "`n")
+    $clean = [regex]::Replace($clean, '(?m)^\|\s*\[release\]\(skills/release/SKILL\.md\)[^\n]*\n?', '')
+    $clean = [regex]::Replace($clean, '(?ms)\n*##\s+Только Шаблон\b.*?(?=\n##|\z)', '')
+    $clean = $clean.TrimEnd("`n") + "`n"
+    return $clean
+}
+
 function Get-NormalizedRegistryText {
     param([string]$Text)
     if ([string]::IsNullOrEmpty($Text)) { return '' }
     $clean = $Text.Replace("`r`n", "`n").TrimEnd("`n")
-    return [regex]::Replace($clean, '(?m)^-\s*\*\*template-(version|source):\*\*.*$', '').Trim()
+    $clean = [regex]::Replace($clean, '(?m)^-\s*\*\*template-(version|source):\*\*.*$', '')
+    $clean = Remove-RegistryTemplateOnlyContent -Text $clean
+    return $clean.Trim()
 }
 
 function Test-SkillsMdContentEqual {
@@ -315,8 +349,165 @@ function Set-ProjectTracker {
     }
 }
 
+function Get-FormattedTemplateVersion {
+    param(
+        [string]$ExplicitVersion,
+        [string]$TemplateRootPath,
+        [string]$GitSourcePath,
+        [string]$FallbackGitSourcePath
+    )
+
+    $sha = $null
+    foreach ($path in @($GitSourcePath, $FallbackGitSourcePath)) {
+        if (-not [string]::IsNullOrWhiteSpace($path)) {
+            try {
+                $revSha = (git -C $path rev-parse --short HEAD 2>$null)
+                if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($revSha)) {
+                    $sha = $revSha.Trim()
+                    break
+                }
+            } catch {}
+        }
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($ExplicitVersion)) {
+        $parsed = ConvertFrom-TemplateVersion $ExplicitVersion
+        $useSha = if (-not [string]::IsNullOrWhiteSpace($parsed.Sha)) { $parsed.Sha } else { $sha }
+
+        if ($parsed.IsLegacy) {
+            if (-not [string]::IsNullOrWhiteSpace($useSha)) {
+                return "$($parsed.LegacyDate) $useSha"
+            }
+            return $parsed.LegacyDate
+        } else {
+            if (-not [string]::IsNullOrWhiteSpace($useSha)) {
+                return "v$($parsed.Text) ($useSha)"
+            }
+            return "v$($parsed.Text)"
+        }
+    }
+
+    $versionFile = if (-not [string]::IsNullOrWhiteSpace($TemplateRootPath)) {
+        Join-Path $TemplateRootPath 'VERSION'
+    } else { $null }
+
+    if ($versionFile -and (Test-Path -LiteralPath $versionFile -PathType Leaf)) {
+        $verContent = (Get-Content -LiteralPath $versionFile -Raw -Encoding utf8).Trim()
+        $parsed = ConvertFrom-SemVer $verContent
+        if (-not [string]::IsNullOrWhiteSpace($sha)) {
+            return "v$($parsed.Text) ($sha)"
+        }
+        return "v$($parsed.Text)"
+    }
+
+    $dateStr = (Get-Date).ToString('yyyy-MM-dd')
+    if (-not [string]::IsNullOrWhiteSpace($sha)) {
+        return "$dateStr $sha"
+    }
+    return $dateStr
+}
+
+function Get-ChangelogExcerpt {
+    param(
+        [string]$ChangelogPath,
+        $CurrentVersion,
+        $TargetVersion
+    )
+
+    if (-not (Test-Path -LiteralPath $ChangelogPath -PathType Leaf)) {
+        return $null
+    }
+
+    $text = Get-Content -LiteralPath $ChangelogPath -Raw -Encoding utf8
+    if ([string]::IsNullOrWhiteSpace($text)) {
+        return $null
+    }
+
+    $text = $text.Replace("`r`n", "`n")
+
+    $pattern = '(?m)^##\s+(?:\[(?<ver>[^\]]+)\]|(?<plain>[^\r\n]+))'
+    $matches = [regex]::Matches($text, $pattern)
+    if ($matches.Count -eq 0) {
+        return $null
+    }
+
+    $selectedSections = [System.Collections.Generic.List[string]]::new()
+
+    for ($i = 0; $i -lt $matches.Count; $i++) {
+        $m = $matches[$i]
+        if (-not $m.Groups['ver'].Success) {
+            continue
+        }
+        $verStr = $m.Groups['ver'].Value.Trim()
+
+        if (-not (Test-SemVer $verStr)) {
+            continue
+        }
+
+        $parsedVer = ConvertFrom-SemVer $verStr
+
+        if ($null -ne $TargetVersion) {
+            $cmpTarget = Compare-SemVer $parsedVer $TargetVersion
+            if ($cmpTarget -gt 0) {
+                continue
+            }
+        }
+
+        if ($null -ne $CurrentVersion) {
+            $cmpCurrent = Compare-SemVer $parsedVer $CurrentVersion
+            if ($cmpCurrent -le 0) {
+                continue
+            }
+        }
+
+        $startIndex = $m.Index
+        $endIndex = if ($i + 1 -lt $matches.Count) {
+            $matches[$i + 1].Index
+        } else {
+            $text.Length
+        }
+
+        $sectionText = $text.Substring($startIndex, $endIndex - $startIndex).Trim()
+        if (-not [string]::IsNullOrWhiteSpace($sectionText)) {
+            $selectedSections.Add($sectionText)
+        }
+    }
+
+    if ($selectedSections.Count -eq 0) {
+        return $null
+    }
+
+    return ($selectedSections -join "`n`n")
+}
+
 switch ($Mode) {
     'New' {
+        # Determine template version to record before cleaning meta files
+        $versionFile = Join-Path $RepoRoot 'VERSION'
+        if (-not (Test-Path -LiteralPath $versionFile -PathType Leaf)) {
+            $registryPath = Join-Path $RepoRoot '.agents' 'SKILLS.md'
+            $existingVer = $null
+            if (Test-Path -LiteralPath $registryPath -PathType Leaf) {
+                $regContent = Get-Content -LiteralPath $registryPath -Raw -Encoding utf8
+                if ($regContent -match '(?m)^-\s*\*\*template-version:\*\*\s*`?([^`\r\n]+)`?') {
+                    $existingVer = $matches[1].Trim()
+                }
+            }
+            $standardsPath = Join-Path $RepoRoot 'CODING_STANDARDS.md'
+            $testsPath = Join-Path $RepoRoot 'tests'
+            $isAlreadyInitialized = (-not (Test-Path -LiteralPath $testsPath)) -and
+                (Test-Path -LiteralPath $standardsPath) -and
+                ((Get-Content -LiteralPath $standardsPath -Raw -Encoding utf8) -match 'Стандарты кодирования')
+
+            if ($isAlreadyInitialized -and -not [string]::IsNullOrWhiteSpace($existingVer) -and [string]::IsNullOrWhiteSpace($TemplateVersion)) {
+                $templateVersionToRecord = $existingVer
+            } else {
+                $templateVersionToRecord = Get-FormattedTemplateVersion -ExplicitVersion $TemplateVersion -TemplateRootPath $RepoRoot -GitSourcePath $RepoRoot
+            }
+        } else {
+            $templateVersionToRecord = Get-FormattedTemplateVersion -ExplicitVersion $TemplateVersion -TemplateRootPath $RepoRoot -GitSourcePath $RepoRoot
+        }
+
         # 1. Clean meta directories and files
         if ($manifest.ContainsKey('Meta')) {
             foreach ($item in $manifest.Meta) {
@@ -360,19 +551,7 @@ switch ($Mode) {
         if (Test-Path -LiteralPath $registryPath -PathType Leaf) {
             $regContent = Get-Content -LiteralPath $registryPath -Raw -Encoding utf8
 
-            $ver = $TemplateVersion
-            if ([string]::IsNullOrWhiteSpace($ver)) {
-                $sha = ''
-                try {
-                    $sha = (git -C $RepoRoot rev-parse --short HEAD 2>$null)
-                } catch {}
-                $dateStr = (Get-Date).ToString('yyyy-MM-dd')
-                if (-not [string]::IsNullOrWhiteSpace($sha)) {
-                    $ver = "$dateStr $sha"
-                } else {
-                    $ver = $dateStr
-                }
-            }
+            $ver = $templateVersionToRecord
 
             $src = $TemplateSource
             if ([string]::IsNullOrWhiteSpace($src)) {
@@ -390,6 +569,8 @@ switch ($Mode) {
             if (-not [string]::IsNullOrWhiteSpace($src)) {
                 $regContent = [regex]::Replace($regContent, '(?m)^-\s*\*\*template-source:\*\*.*$', "- **template-source:** ``$src``")
             }
+
+            $regContent = Remove-RegistryTemplateOnlyContent -Text $regContent
 
             Set-Content -LiteralPath $registryPath -Value $regContent -Encoding utf8 -NoNewline
         }
@@ -435,9 +616,11 @@ switch ($Mode) {
                 $srcEntryPath = Join-Path $resolvedTemplateSource $entry
                 if (-not (Test-Path -LiteralPath $srcEntryPath)) {
                     # If it's a directory that doesn't exist in source, ensure directory exists in dest
-                    $destDirPath = Join-Path $RepoRoot $entry
-                    if (-not (Test-Path -LiteralPath $destDirPath)) {
-                        New-Item -ItemType Directory -Path $destDirPath -Force | Out-Null
+                    if (-not [System.IO.Path]::HasExtension($entry)) {
+                        $destDirPath = Join-Path $RepoRoot $entry
+                        if (-not (Test-Path -LiteralPath $destDirPath)) {
+                            New-Item -ItemType Directory -Path $destDirPath -Force | Out-Null
+                        }
                     }
                     continue
                 }
@@ -491,7 +674,13 @@ switch ($Mode) {
                         if (-not (Test-Path -LiteralPath $parentDir)) {
                             New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
                         }
-                        Copy-Item -LiteralPath $file.FullName -Destination $destFilePath -Force
+                        if ($normalizedRel -eq '.agents/SKILLS.md') {
+                            $regText = Get-Content -LiteralPath $file.FullName -Raw -Encoding utf8
+                            $regText = Remove-RegistryTemplateOnlyContent -Text $regText
+                            Set-Content -LiteralPath $destFilePath -Value $regText -Encoding utf8 -NoNewline
+                        } else {
+                            Copy-Item -LiteralPath $file.FullName -Destination $destFilePath -Force
+                        }
                     }
                 }
             } else {
@@ -520,7 +709,13 @@ switch ($Mode) {
                     if (-not (Test-Path -LiteralPath $parentDir)) {
                         New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
                     }
-                    Copy-Item -LiteralPath $srcEntryPath -Destination $destFilePath -Force
+                    if ($normalizedRel -eq '.agents/SKILLS.md') {
+                        $regText = Get-Content -LiteralPath $srcEntryPath -Raw -Encoding utf8
+                        $regText = Remove-RegistryTemplateOnlyContent -Text $regText
+                        Set-Content -LiteralPath $destFilePath -Value $regText -Encoding utf8 -NoNewline
+                    } else {
+                        Copy-Item -LiteralPath $srcEntryPath -Destination $destFilePath -Force
+                    }
                 }
             }
         }
@@ -597,24 +792,7 @@ switch ($Mode) {
         if (Test-Path -LiteralPath $registryPath -PathType Leaf) {
             $regContent = Get-Content -LiteralPath $registryPath -Raw -Encoding utf8
 
-            $ver = $TemplateVersion
-            if ([string]::IsNullOrWhiteSpace($ver)) {
-                $sha = ''
-                try {
-                    $sha = (git -C $resolvedTemplateSource rev-parse --short HEAD 2>$null)
-                } catch {}
-                if ([string]::IsNullOrWhiteSpace($sha)) {
-                    try {
-                        $sha = (git -C $RepoRoot rev-parse --short HEAD 2>$null)
-                    } catch {}
-                }
-                $dateStr = (Get-Date).ToString('yyyy-MM-dd')
-                if (-not [string]::IsNullOrWhiteSpace($sha)) {
-                    $ver = "$dateStr $sha"
-                } else {
-                    $ver = $dateStr
-                }
-            }
+            $ver = Get-FormattedTemplateVersion -ExplicitVersion $TemplateVersion -TemplateRootPath $resolvedTemplateSource -GitSourcePath $resolvedTemplateSource -FallbackGitSourcePath $RepoRoot
 
             $src = $TemplateSource
             if ([string]::IsNullOrWhiteSpace($src)) {
@@ -632,6 +810,8 @@ switch ($Mode) {
             if (-not [string]::IsNullOrWhiteSpace($src)) {
                 $regContent = [regex]::Replace($regContent, '(?m)^-\s*\*\*template-source:\*\*.*$', "- **template-source:** ``$src``")
             }
+
+            $regContent = Remove-RegistryTemplateOnlyContent -Text $regContent
 
             Set-Content -LiteralPath $registryPath -Value $regContent -Encoding utf8 -NoNewline
         }
@@ -690,6 +870,23 @@ switch ($Mode) {
             }
         }
 
+        $currentVerObj = $null
+        if (-not [string]::IsNullOrWhiteSpace($baseVerStr)) {
+            try {
+                $currentVerObj = ConvertFrom-TemplateVersion $baseVerStr
+            } catch {}
+        }
+        $currentVerDisplay = if (-not [string]::IsNullOrWhiteSpace($baseVerStr)) { $baseVerStr } else { '(none)' }
+
+        # Resolve target version
+        $targetVerDisplay = Get-FormattedTemplateVersion -ExplicitVersion $TemplateVersion -TemplateRootPath $resolvedTemplateSource -GitSourcePath $resolvedTemplateSource -FallbackGitSourcePath $RepoRoot
+        $targetVerObj = $null
+        if (-not [string]::IsNullOrWhiteSpace($targetVerDisplay)) {
+            try {
+                $targetVerObj = ConvertFrom-TemplateVersion $targetVerDisplay
+            } catch {}
+        }
+
         # 3. Check if template source is a git repository and resolve base git commit
         $isGitRepo = $false
         try {
@@ -701,22 +898,46 @@ switch ($Mode) {
 
         $baseCommit = $null
         if ($isGitRepo -and -not [string]::IsNullOrWhiteSpace($baseVerStr)) {
-            $shaMatch = [regex]::Match($baseVerStr, '\b([0-9a-f]{7,40})\b', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
-            if ($shaMatch.Success) {
-                $candidate = $shaMatch.Groups[1].Value
-                $commitSha = & git -C $resolvedTemplateSource rev-parse --verify --quiet "$candidate^{commit}" 2>$null
+            $candidateSha = if ($null -ne $currentVerObj -and -not [string]::IsNullOrWhiteSpace($currentVerObj.Sha)) {
+                $currentVerObj.Sha
+            } else {
+                $shaMatch = [regex]::Match($baseVerStr, '\b([0-9a-f]{4,40})\b', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+                if ($shaMatch.Success) { $shaMatch.Groups[1].Value } else { $null }
+            }
+
+            if (-not [string]::IsNullOrWhiteSpace($candidateSha)) {
+                $commitSha = & git -C $resolvedTemplateSource rev-parse --verify --quiet "$candidateSha^{commit}" 2>$null
                 if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($commitSha)) {
                     $baseCommit = $commitSha.Trim()
                 }
             }
+
             if ($baseCommit -eq $null) {
-                $lastToken = ($baseVerStr.Trim().Split(" `t`r`n", [System.StringSplitOptions]::RemoveEmptyEntries))[-1]
+                $lastToken = ($baseVerStr.Trim().TrimEnd(')').Split(" `t`r`n(", [System.StringSplitOptions]::RemoveEmptyEntries))[-1]
                 $commitSha = & git -C $resolvedTemplateSource rev-parse --verify --quiet "$lastToken^{commit}" 2>$null
                 if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($commitSha)) {
                     $baseCommit = $commitSha.Trim()
                 }
             }
         }
+
+        # Check for MAJOR version bump
+        $isMajorBump = $false
+        if ($null -ne $targetVerObj -and -not $targetVerObj.IsLegacy) {
+            if ($null -eq $currentVerObj -or $currentVerObj.IsLegacy) {
+                if ($targetVerObj.Major -ge 1) {
+                    $isMajorBump = $true
+                }
+            } else {
+                if ($targetVerObj.Major -gt $currentVerObj.Major) {
+                    $isMajorBump = $true
+                }
+            }
+        }
+
+        # Extract changelog excerpt between (current, target]
+        $changelogPath = Join-Path $resolvedTemplateSource 'CHANGELOG.md'
+        $changelogExcerpt = Get-ChangelogExcerpt -ChangelogPath $changelogPath -CurrentVersion $currentVerObj -TargetVersion $targetVerObj
 
         # 4. Enumerate payload files from Template, Target, and Base
         $metaPatterns = @()
@@ -812,15 +1033,28 @@ switch ($Mode) {
         Write-Output "Template Update Report"
         Write-Output "Target repository: $RepoRoot"
         Write-Output "Template source:   $resolvedTemplateSource"
-        if (-not [string]::IsNullOrWhiteSpace($baseVerStr)) {
-            Write-Output "Base version:      $baseVerStr"
-        }
+        Write-Output "Current version:   $currentVerDisplay"
+        Write-Output "Target version:    $targetVerDisplay"
         if (-not [string]::IsNullOrWhiteSpace($baseCommit)) {
             Write-Output "Base git commit:   $baseCommit"
         } else {
             Write-Output "Base git commit:   (not available - differences treated as conflicts)"
         }
         Write-Output ""
+
+        if ($isMajorBump) {
+            $currText = if ($null -ne $currentVerObj) { $currentVerObj.Text } else { 'none' }
+            Write-Output "WARNING: Target version ($($targetVerObj.Text)) introduces a MAJOR version bump over current version ($currText)."
+            Write-Output "Breaking changes may affect existing project workflows, skills, or scripts. Review the changelog below carefully before updating."
+            Write-Output ""
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($changelogExcerpt)) {
+            Write-Output "Changelog excerpt ($currentVerDisplay -> $targetVerDisplay):"
+            Write-Output ""
+            Write-Output $changelogExcerpt
+            Write-Output ""
+        }
 
         if ($totalChanges -eq 0) {
             Write-Output "No pending template updates. Project is up to date."
@@ -879,7 +1113,13 @@ switch ($Mode) {
                 if (-not (Test-Path -LiteralPath $destDir)) {
                     New-Item -ItemType Directory -Path $destDir -Force | Out-Null
                 }
-                Copy-Item -LiteralPath $src -Destination $dest -Force
+                if ($f -eq '.agents/SKILLS.md') {
+                    $addContent = Get-Content -LiteralPath $src -Raw -Encoding utf8
+                    $addContent = Remove-RegistryTemplateOnlyContent -Text $addContent
+                    Set-Content -LiteralPath $dest -Value $addContent -Encoding utf8 -NoNewline
+                } else {
+                    Copy-Item -LiteralPath $src -Destination $dest -Force
+                }
                 Write-Output "Applied (added): $f"
             }
 
@@ -894,7 +1134,13 @@ switch ($Mode) {
                 if (-not (Test-Path -LiteralPath $destDir)) {
                     New-Item -ItemType Directory -Path $destDir -Force | Out-Null
                 }
-                Copy-Item -LiteralPath $src -Destination $dest -Force
+                if ($f -eq '.agents/SKILLS.md') {
+                    $modContent = Get-Content -LiteralPath $src -Raw -Encoding utf8
+                    $modContent = Remove-RegistryTemplateOnlyContent -Text $modContent
+                    Set-Content -LiteralPath $dest -Value $modContent -Encoding utf8 -NoNewline
+                } else {
+                    Copy-Item -LiteralPath $src -Destination $dest -Force
+                }
                 Write-Output "Applied (modified): $f"
             }
 
@@ -931,24 +1177,7 @@ switch ($Mode) {
             if (Test-Path -LiteralPath $registryPath -PathType Leaf) {
                 $regContent = Get-Content -LiteralPath $registryPath -Raw -Encoding utf8
 
-                $ver = $TemplateVersion
-                if ([string]::IsNullOrWhiteSpace($ver)) {
-                    $sha = ''
-                    try {
-                        $sha = (git -C $resolvedTemplateSource rev-parse --short HEAD 2>$null)
-                    } catch {}
-                    if ([string]::IsNullOrWhiteSpace($sha)) {
-                        try {
-                            $sha = (git -C $RepoRoot rev-parse --short HEAD 2>$null)
-                        } catch {}
-                    }
-                    $dateStr = (Get-Date).ToString('yyyy-MM-dd')
-                    if (-not [string]::IsNullOrWhiteSpace($sha)) {
-                        $ver = "$dateStr $sha"
-                    } else {
-                        $ver = $dateStr
-                    }
-                }
+                $ver = $targetVerDisplay
 
                 $src = $TemplateSource
                 if ([string]::IsNullOrWhiteSpace($src)) {
@@ -967,6 +1196,8 @@ switch ($Mode) {
                     $regContent = [regex]::Replace($regContent, '(?m)^-\s*\*\*template-source:\*\*.*$', "- **template-source:** ``$src``")
                 }
 
+                $regContent = Remove-RegistryTemplateOnlyContent -Text $regContent
+
                 Set-Content -LiteralPath $registryPath -Value $regContent -Encoding utf8 -NoNewline
             }
 
@@ -982,7 +1213,7 @@ switch ($Mode) {
                 & $testScript
             }
 
-            Write-Output "Project successfully updated to template version '$ver' (RepoRoot: $RepoRoot)."
+            Write-Output "Project successfully updated to template version '$targetVerDisplay' (RepoRoot: $RepoRoot)."
         } else {
             Write-Output ""
             Write-Output "Dry run complete. Use -Apply to apply non-conflicting changes."

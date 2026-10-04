@@ -56,7 +56,7 @@ Each stage ends at a stop gate. Read the stage's `SKILL.md` at the path below wh
 
 - One stage per response. End each stage — and Step 0 — by showing the result, then wait for the user's explicit confirmation before starting the next.
 - At the Stage 5 (Review) stop gate, explicitly present the user with the next-step options: full close via `/close-task` (preflight + handoff + scratch cleanup + local commit), context transfer via `/handoff` (session handoff without commit), or further edits.
-- Hard guardrail: run handoff or close, commit, or clean `.scratch/` only on an explicit user command, such as «делай handoff», «фиксируй», «закрывай задачу», «мерджим».
+- Hard guardrail: run handoff or close, commit, or clean `.scratch/` only on an explicit user command, such as «делай handoff», «фиксируй», «закрывай задачу», «мерджим». The command `/release` / «выпускай релиз» is the single command permitting the agent to push, and ONLY after explicit confirmation on the release stop gate. Force-push (`--force`, `--force-with-lease`) is strictly prohibited under all circumstances. Other skills (`close-task`, `handoff`) retain the prohibition on push — publishing regular task work stays with the user.
 
 ## Context budget
 
@@ -66,7 +66,8 @@ Each stage ends at a stop gate. Read the stage's `SKILL.md` at the path below wh
 ## Language
 
 - Agent-facing text (`AGENTS.md`, `SKILL.md`, script comments): English.
-- Human-facing documents (specs, ADRs, tickets, handoffs, Registry, README) and every reply to the user: Russian.
+- Public files (`README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md`, `THIRD_PARTY_NOTICES.md`, `LICENSE`, `.github/**`, `docs/releasing.md`, commit messages, and PR titles): English.
+- Human-facing internal documents (specs, ADRs, tickets, handoffs, Registry, `README.ru.md`) and every reply to the user: Russian.
 
 ## Skills by path
 

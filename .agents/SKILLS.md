@@ -2,7 +2,7 @@
 
 Каталог всех скиллов Шаблона из `.agents/skills/`. Категории задаются здесь, а не папками (см. ADR 0002). При добавлении, удалении или переименовании скилла Реестр обновляется в том же изменении. Согласованность проверяет `.agents/scripts/Test-Template.ps1`.
 
-- **template-version:** `v0.0.0`
+- **template-version:** `v1.0.0`
 - **template-source:** `https://github.com/cannoneer85-svg/StrataHarness`
 
 **Колонки.** Запуск: `ручной` — модель не вызывает скилл сама (`disable-model-invocation: true` в `SKILL.md` и `allow_implicit_invocation: false` в `agents/openai.yaml`), только слэш-командой или чтением по пути; `авто` — модель может выбрать скилл сама. Источник: `matt` — скилл Matt Pocock без изменений, `matt+правки` — скилл Matt с нашими правками (см. ADR 0003), `свой` — написан для Шаблона. Статус: `active` или `in-progress`.

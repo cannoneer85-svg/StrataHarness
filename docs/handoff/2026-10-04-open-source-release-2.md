@@ -1,4 +1,3 @@
-<!-- docs/handoff/2026-10-04-open-source-release-2.md -->
 # Handoff: open-source-release (Завершение релиза и публикации StrataHarness v1.0.0)
 
 ## State

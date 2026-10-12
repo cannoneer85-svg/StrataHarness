@@ -10,7 +10,7 @@ The issue tracker and triage label vocabulary should have been provided to you. 
 
 ## Process
 
-1. Explore the repo to understand the current state of the codebase, if you haven't already. Use the project's domain glossary vocabulary throughout the spec, and respect any ADRs in the area you're touching. If the interview log `.scratch/<feature>/OPEN_QUESTIONS.md` exists, read it: its decisions feed the spec, its ADR candidates feed step 4.
+1. Explore the repo to understand the current state of the codebase, if you haven't already. Use the project's domain glossary vocabulary throughout the spec, and respect any ADRs in the area you're touching. If the interview log `.scratch/<feature>/OPEN_QUESTIONS.md` exists, read it: its decisions feed the spec, its ADR candidates feed step 4. Apply the **minimal-diff** discipline ([`minimal-diff`](../minimal-diff/SKILL.md)): filter out speculative abstractions, single-implementer interfaces, and unjustified dependencies; document explicit rationale for any new external package.
 
 2. Sketch out the seams at which you're going to test the feature. Existing seams should be preferred to new ones. Use the highest seam possible. If new seams are needed, propose them at the highest point you can. The fewer seams across the codebase, the better - the ideal number is one.
 
@@ -55,6 +55,7 @@ A list of implementation decisions that were made. This can include:
 - Schema changes
 - API contracts
 - Specific interactions
+- Solution scope and minimal-diff assessment: rationale for architectural boundaries, why existing utilities cannot solve the task, and justification for any new external dependency
 
 Do NOT include specific file paths or code snippets. They may end up being outdated very quickly.
 

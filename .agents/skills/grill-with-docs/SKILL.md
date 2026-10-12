@@ -10,13 +10,13 @@ Call the Skill tool twice, for "grilling" and "domain-modeling".
 
 ## Rounds
 
-The number of mandatory rounds and questions per Category is set in the Routes table of the root `AGENTS.md`. A route with N mandatory rounds runs the first N themes below, in order; adapt each theme to the domain (UI, API, data, hardware, documents):
+The mandatory rounds per Category are set in the Routes table of the root `AGENTS.md`. There is no upper question cap: ask until no open architectural, interface, or MVP boundary decisions remain, settling implementation trivia with sensible defaults yourself. A stop command from the user (such as «хватит / пиши спеку») halts the interview immediately. A route with N mandatory rounds runs the first N themes below, in order; adapt each theme to the domain (UI, API, data, hardware, documents):
 
 1. **Outline and happy path** — core intent, scope and MVP boundaries, interfaces and contracts, the main flow. On the Minor route this single round covers the immediate design choices.
 2. **Errors and edge cases** — invalid input, failure states, degradation and recovery, concurrency, boundary conditions.
 3. **NFR** — performance, security, resource and token limits, observability, deployment.
 
-Within a round, work the grilling frontier; follow-up questions raised by the answers stay in the same round. A round is done when its theme's frontier is empty and its answers are in the log. Offer the next stage (`/to-spec`; on Minor, implementation) only once every mandatory round of the current Category is done.
+Within a round, work the grilling frontier; follow-up questions raised by the user's answers stay in the same round, dynamically branching down the decision tree. Settle prerequisite choices before introducing downstream decisions. A round is done when its theme's frontier is empty and its answers are in the log, or when the user halts the interview. Offer the next stage (`/to-spec`; on Minor, implementation) only once every mandatory round of the current Category is done. If an interview on the Minor route uncovers more than ~5 decision branches, announce re-categorisation to Feature immediately and run Round 2.
 
 ## Question format
 

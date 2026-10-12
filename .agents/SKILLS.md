@@ -39,6 +39,7 @@
 |---|---|---|---|---|
 | [tdd](skills/tdd/SKILL.md) | Разработка через тесты (red-green-refactor), интеграционные тесты | авто | matt | active |
 | [diagnosing-bugs](skills/diagnosing-bugs/SKILL.md) | Цикл диагностики сложных багов и регрессий производительности | авто | matt | active |
+| [minimal-diff](skills/minimal-diff/SKILL.md) | Дисциплина объема решения: лестница 7 ступеней до написания кода, запретные зоны и правила зависимостей | авто | свой | active |
 | [migrate-to-shoehorn](skills/migrate-to-shoehorn/SKILL.md) | Перевести тесты с утверждений типа `as` на `@total-typescript/shoehorn` | авто | matt | active |
 
 ## Домен и дизайн

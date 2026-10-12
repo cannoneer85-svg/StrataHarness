@@ -106,11 +106,12 @@ In the initial response, the agent announces the **Type** and **Category** with 
   - `Epic` — multiple modules, core architecture changes, many unknowns.
   - `Fog (Туман)` — path is unclear; routed to `wayfinder` to resolve ambiguity.
 
-### 2. Routes and Interview Quotas
-- **Minor:** 1 interview round (2–4 questions) → In-Place implementation → review → close.
-- **Feature:** ≥ 2 interview rounds (6–8 questions) → specification in `docs/specs/` → tickets in `.scratch/<feature>/issues/` with dependency graph `TICKETS.md` → implementation → review → close.
-- **Epic:** ≥ 3 interview rounds (10–12+ questions) → specification → tickets → Orchestrator implementation (isolated subagents per ticket) → review → close.
-- **Analysis:** 1 short round (4 questions) → research → draft in `docs/analysis/` → review → close.
+### 2. Routes and Interview Rounds
+- **Minor:** 1 round (Outline & happy path) → In-Place implementation → review → close.
+- **Feature:** 2 rounds (Happy path + Errors & edge cases) → specification in `docs/specs/` → tickets in `.scratch/<feature>/issues/` with dependency graph `TICKETS.md` → implementation → review → close.
+- **Epic:** 3 rounds (Happy path + Errors & edge cases + NFR) → specification → tickets → Orchestrator implementation (isolated subagents per ticket) → review → close.
+- **Analysis:** 1 short round (4 points) → research → draft in `docs/analysis/` → review → close.
+- *No question cap:* rounds explore the open decision frontier until settled; follow-up questions branch within the current round without arbitrary question caps.
 
 ### 3. Stop Gates
 - **One stage per turn:** The agent never skips stages and stops to present results at each stop gate, waiting for explicit user approval before proceeding.

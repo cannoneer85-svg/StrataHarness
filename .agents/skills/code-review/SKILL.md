@@ -60,14 +60,15 @@ Each smell reads *what it is* → *how to fix*; match it against the diff:
 - **Message Chains** — long `a.b().c().d()` navigation the caller shouldn't depend on. → hide the walk behind one method on the first object.
 - **Middle Man** — a class or function that mostly just delegates onward. → cut it, call the real target direct.
 - **Refused Bequest** — a subclass or implementer that ignores or overrides most of what it inherits. → drop the inheritance, use composition.
+- **Minimal-Diff Breaches** ([`minimal-diff`](../minimal-diff/SKILL.md)) — speculative classes, interfaces with a single implementer, home-rolled wheels where standard libraries or existing utilities exist, unjustified dependencies, or scattered patches instead of root-cause repair. → remove speculative abstractions, consolidate to root cause.
 
-### 4. Spawn both sub-agents in parallel
+### 4. Spawn sub-agents in parallel
 
 **Standards sub-agent prompt** — include:
 
 - The change set from step 1: the diff command, the new-file list, and the commit list.
 - The list of standards-source files you found in step 3, **plus the smell baseline from step 3** pasted in full — the sub-agent has no other access to it.
-- The brief: "Report — per file/hunk where relevant — (a) every place the diff violates a documented standard: cite the standard (file + the rule); and (b) any baseline smell you spot: name it and quote the hunk. Distinguish hard violations from judgement calls — documented-standard breaches can be hard, but baseline smells are always judgement calls, and a documented repo standard overrides the baseline. Skip anything tooling enforces. Under 400 words."
+- The brief: "Report — per file/hunk where relevant — (a) every place the diff violates a documented standard: cite the standard (file + the rule); (b) any baseline smell or minimal-diff breach you spot (speculative abstractions, unjustified new dependencies, single-implementer interfaces, scattered patches instead of root-cause fix); and (c) any concurrency or boundary safety hazards. Distinguish hard violations from judgement calls — documented-standard breaches can be hard, but baseline smells are always judgement calls, and a documented repo standard overrides the baseline. Skip anything tooling enforces. Under 400 words."
 
 **Spec sub-agent prompt** — include:
 
@@ -77,9 +78,13 @@ Each smell reads *what it is* → *how to fix*; match it against the diff:
 
 If the spec is missing, skip the Spec sub-agent and note this in the final report.
 
+**Adversary sub-agent (Epic & security-critical tasks only)**:
+For tasks on the Epic route, or changes modifying authentication, permissions, data migrations, or concurrent resources, spawn a third parallel sub-agent: **Adversary**.
+- Brief: "Act as an independent adversary with a presumption of failure. Examine the diff to identify up to 3 concrete failure scenarios: race conditions, unhandled failure/boundary states, resource exhaustion, authorization bypasses, or silent data loss. Quote file and line for each scenario. Under 400 words."
+
 ### 5. Aggregate
 
-Present the two reports under `## Standards` and `## Spec` headings, verbatim or lightly cleaned. Do **not** merge or rerank findings — the two axes are deliberately separate (see _Why two axes_).
+Present the reports under `## Standards`, `## Spec`, and (if spawned) `## Adversary` headings, verbatim or lightly cleaned. Do **not** merge or rerank findings across headings — the axes are deliberately separate (see _Why two axes_).
 
 End with a one-line summary: total findings per axis, and the worst issue _within each axis_ (if any). Don't pick a single winner across axes — that's the reranking the separation exists to prevent.
 

@@ -41,14 +41,18 @@ Each stage ends at a stop gate. Read the stage's `SKILL.md` at the path below wh
 
 ## Routes
 
-| Route | Stages | Interview quota |
+| Route | Stages | Interview mandatory rounds |
 |---|---|---|
-| Minor | 1 → 4 (In-Place) → 5 → 6 | 1 round, 2–4 questions |
-| Feature | 1 → 2 → 3 → 4 → 5 → 6 | ≥ 2 rounds, 6–8 questions |
-| Epic | 1 → 2 → 3 → 4 (Orchestrator) → 5 → 6 | ≥ 3 rounds, 10–12+ questions |
+| Minor | 1 → 4 (In-Place) → 5 → 6 | 1 round: Outline and happy path |
+| Feature | 1 → 2 → 3 → 4 → 5 → 6 | 2 rounds: Happy path + Errors & edge cases |
+| Epic | 1 → 2 → 3 → 4 (Orchestrator) → 5 → 6 | 3 rounds: Happy path + Errors & edge cases + NFR |
 | Fog | 1 (wayfinder) → 2 → 3 → 4 → 5 → 6 | set by wayfinder |
-| Analysis | [analyze](.agents/skills/analyze/SKILL.md): interview ⛔ → work → draft in `docs/analysis/` ⛔ → close (handoff or close-task) | 1 short round, 4 points |
+| Analysis | [analyze](.agents/skills/analyze/SKILL.md): interview ⛔ → work → draft in `docs/analysis/` ⛔ → close (handoff or close-task) | 1 short round: 4 points |
 
+- **No question cap:** ask until no open architectural, contract or MVP decisions remain; resolve implementation trivia with sensible defaults yourself.
+- **Adaptive follow-ups:** follow-up questions belong to the active round's theme; settle current decisions before moving to the next theme.
+- **User override:** the user may halt the interview at any time with a stop phrase such as «хватит / пиши спеку».
+- **Escalation signal:** if a Minor interview uncovers > 4–5 open decision questions, announce re-categorisation to Feature immediately and run Round 2.
 - Ask interview questions with the harness's interactive question tool (Antigravity: `ask_question`) when it has one; grill-with-docs defines the rounds.
 - Offer the spec only after every mandatory round of the current Category is done.
 

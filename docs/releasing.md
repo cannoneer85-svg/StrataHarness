@@ -155,8 +155,7 @@ When ready to open-source the repository:
 - [ ] **Audit Git History:** Verify that no private credentials, SSH keys, passwords, personal tokens, or proprietary files exist anywhere in the git history.
 - [ ] **Audit Disk Paths:** Verify that no local filesystem paths (e.g. `YandexDisk` or internal user profile folders) are present in tracked files or commit messages.
 - [ ] **Validate Public Documentation:**
-  - [`README.md`](../README.md) (English root README)
-  - [`README.ru.md`](../README.ru.md) (Russian translation)
+  - [`README.md`](../README.md) (English root README) and translations ([`README.ru.md`](../README.ru.md), [`README.zh-CN.md`](../README.zh-CN.md), [`README.es.md`](../README.es.md), [`README.fr.md`](../README.fr.md), [`README.pt-PT.md`](../README.pt-PT.md))
   - [`CONTRIBUTING.md`](../CONTRIBUTING.md) (Contribution guidelines)
   - [`SECURITY.md`](../SECURITY.md) (Security policy & advisory link)
   - [`LICENSE`](../LICENSE) (MIT License, Sergey Bizikin)

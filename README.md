@@ -1,6 +1,6 @@
 # StrataHarness
 
-[English](README.md) | [Русский](README.ru.md)
+[English](README.md) | [Русский](README.ru.md) | [简体中文](README.zh-CN.md) | [Español](README.es.md) | [Français](README.fr.md) | [Português (Portugal)](README.pt-PT.md)
 
 A production-ready Template repository for software development with autonomous AI coding agents. It provides a structured 6-stage development lifecycle, explicit stop gates, context management protocols, and a comprehensive library of specialized agent skills.
 

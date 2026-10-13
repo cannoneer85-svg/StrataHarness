@@ -1,6 +1,6 @@
 # StrataHarness
 
-[English](README.md) | [Русский](README.ru.md)
+[English](README.md) | [Русский](README.ru.md) | [简体中文](README.zh-CN.md) | [Español](README.es.md) | [Français](README.fr.md) | [Português (Portugal)](README.pt-PT.md)
 
 Готовый к использованию репозиторий-шаблон (Template Repository) для организации профессиональной разработки программного обеспечения с автономными AI-агентами. Содержит структурированный 6-этапный цикл разработки, явные стоп-гейты, протоколы управления контекстом и исчерпывающую библиотеку специализированных скиллов (skills).
 

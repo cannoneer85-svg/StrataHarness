@@ -78,7 +78,7 @@ Our repository maintains a deliberate bilingual convention documented in [`AGENT
   - Task tickets in `.scratch/<feature>/issues/` and `TICKETS.md`.
   - Session handoffs in `docs/handoff/`.
   - Skill Registry notes in [`.agents/SKILLS.md`](.agents/SKILLS.md) and glossary in [`.agents/CONTEXT.md`](.agents/CONTEXT.md).
-  - Russian README translation in [`README.ru.md`](README.ru.md).
+  - Translated README editions: [`README.ru.md`](README.ru.md) (Russian), [`README.zh-CN.md`](README.zh-CN.md) (Simplified Chinese), [`README.es.md`](README.es.md) (Spanish), [`README.fr.md`](README.fr.md) (French), [`README.pt-PT.md`](README.pt-PT.md) (Portuguese).
 
 ---
 

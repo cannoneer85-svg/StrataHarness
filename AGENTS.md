@@ -71,7 +71,7 @@ Each stage ends at a stop gate. Read the stage's `SKILL.md` at the path below wh
 
 - Agent-facing text (`AGENTS.md`, `SKILL.md`, script comments): English.
 - Public files (`README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md`, `THIRD_PARTY_NOTICES.md`, `LICENSE`, `.github/**`, `docs/releasing.md`, commit messages, and PR titles): English.
-- Human-facing internal documents (specs, ADRs, tickets, handoffs, Registry, `README.ru.md`) and every reply to the user: Russian.
+- Human-facing internal documents (specs, ADRs, tickets, handoffs, Registry, `README.ru.md` and other `README.<lang>.md` translations) and every reply to the user: Russian.
 
 ## Skills by path
 

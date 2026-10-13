@@ -8,6 +8,21 @@ Each release section is titled `## [X.Y.Z] - YYYY-MM-DD - <release title>` and m
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-13 - Minimal-Diff Discipline, Process Hardening, and Multi-Language Support
+
+### Added
+- **Minimal-Diff Discipline**: Added the `minimal-diff` skill with a 7-step solution ladder, conscious tradeoff documentation (`// TRADEOFF`), and strict Forbidden Zones (security, authorization, boundary validation, error handling, contract compatibility, and behavior tests).
+- **Thematic Interview Rounds**: Replaced brittle numeric question quotas with mandatory round themes across task categories, added immediate user override via stop phrases («хватит / пиши спеку»), and established an escalation threshold for Minor tasks.
+- **Three-Axis Code Review**: Expanded `code-review` to incorporate minimal-diff and duplication audits, plus an optional third `Adversary` axis for security-critical tasks.
+- **Two-Tier Testing Standards**: Introduced test suite separation in `CODING_STANDARDS.md` and tagged template tests into fast Unit (< 20s) and Integration suites, preventing agent stalling during implementation.
+- **Multi-Language READMEs**: Added translations for Simplified Chinese (`zh-CN`), Spanish (`es`), French (`fr`), and Portuguese (`pt-PT`) with a top-level language switcher.
+
+### Fixed
+- **Cross-Platform Test Fixtures**: Resolved cross-platform dot-folder traversal and dynamic SemVer parsing issues in test helpers.
+
+### Other
+- **Documentation & Analysis**: Added in-depth comparison with agent harness analogs, clarified tracker ticket lifecycles (`ready-for-human` to `in-progress`), and updated agent invocation guidelines.
+
 ## [1.0.0] - 2026-10-04 - Initial Open Source Release
 
 ### Added

@@ -18,7 +18,7 @@
 | [to-spec](skills/to-spec/SKILL.md) | Свести обсуждение в спецификацию без нового интервью | ручной | matt+правки | active |
 | [to-tickets](skills/to-tickets/SKILL.md) | Разбить спеку или план на тикеты-трассеры с зависимостями `Blocked by` | ручной | matt+правки | active |
 | [implement](skills/implement/SKILL.md) | Реализовать работу по спеке или тикетам | ручной | matt+правки | active |
-| [code-review](skills/code-review/SKILL.md) | Ревью изменений от фиксированной точки по двум осям: Standards и Spec | авто | matt+правки | active |
+| [code-review](skills/code-review/SKILL.md) | Ревью изменений от фиксированной точки по осям Standards, Spec и опционально Adversary | авто | matt+правки | active |
 | [handoff](skills/handoff/SKILL.md) | Передать контекст новой сессии: документ в `docs/handoff/`, `LATEST.md`, очистка завершённого в `.scratch`; без коммита | ручной | matt+правки | active |
 | [close-task](skills/close-task/SKILL.md) | Закрыть задачу: предпроверка, шаги handoff и один conventional-коммит, без push | ручной | свой | active |
 | [claude-handoff](skills/claude-handoff/SKILL.md) | Передать разговор свежему фоновому агенту, который сразу продолжит работу | авто | matt | active |

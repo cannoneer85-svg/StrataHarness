@@ -280,7 +280,7 @@ Locally modified by project team.
     }
 }
 
-Describe 'Initialize-Project.ps1 -Mode New' {
+Describe 'Initialize-Project.ps1 -Mode New' -Tag 'Integration' {
     It 'cleans meta directories and deletes tests/' {
         $root = New-FixtureRepo
         & $script:InitScript -Mode New -RepoRoot $root -TemplateSource 'https://github.com/my-org/my-template'
@@ -441,7 +441,7 @@ Describe 'Initialize-Project.ps1 -Mode New' {
     }
 }
 
-Describe 'Initialize-Project.ps1 -Mode Adopt' {
+Describe 'Initialize-Project.ps1 -Mode Adopt' -Tag 'Integration' {
     It 'leaves existing files byte-for-byte unchanged' {
         $target = New-TargetRepo
         $readmeBefore = [System.IO.File]::ReadAllBytes((Join-Path $target 'README.md'))
@@ -623,7 +623,7 @@ Describe 'Initialize-Project.ps1 -Mode Adopt' {
     }
 }
 
-Describe 'Initialize-Project.ps1 tracker reconfiguration' {
+Describe 'Initialize-Project.ps1 tracker reconfiguration' -Tag 'Integration' {
     It 'updates only docs/agents/issue-tracker.md and AGENTS.md tracker section' {
         $root = New-FixtureRepo
         & $script:InitScript -Mode New -RepoRoot $root -TemplateSource 'https://github.com/my-org/my-template'
@@ -683,7 +683,7 @@ Describe 'Initialize-Project.ps1 tracker reconfiguration' {
     }
 }
 
-Describe 'Initialize-Project.ps1 -Mode Update' {
+Describe 'Initialize-Project.ps1 -Mode Update' -Tag 'Integration' {
     It 'correctly categorizes added, modified, removed, and conflict files in dry-run' {
         $fix = New-UpdateFixture
         $output = & $script:InitScript -Mode Update -RepoRoot $fix.ProjectRoot

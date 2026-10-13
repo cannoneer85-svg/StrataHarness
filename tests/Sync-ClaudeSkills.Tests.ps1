@@ -52,7 +52,7 @@ BeforeAll {
     }
 }
 
-Describe 'Sync-ClaudeSkills.ps1' {
+Describe 'Sync-ClaudeSkills.ps1' -Tag 'Unit' {
     It 'creates a full copy when the mirror does not exist' {
         $root = New-FixtureRepo
 

@@ -8,7 +8,7 @@ BeforeAll {
     . (Join-Path $PSScriptRoot '..' '.agents' 'scripts' 'SemVer.ps1')
 }
 
-Describe 'Test-SemVer' {
+Describe 'Test-SemVer' -Tag 'Unit' {
     It 'accepts <_>' -ForEach @('0.0.0', '1.0.0', '1.2.3', '10.20.30', '1.1.0-rc.1', '2.0.0-rc.12') {
         Test-SemVer $_ | Should -BeTrue
     }
@@ -21,7 +21,7 @@ Describe 'Test-SemVer' {
     }
 }
 
-Describe 'ConvertFrom-SemVer' {
+Describe 'ConvertFrom-SemVer' -Tag 'Unit' {
     It 'parses a release version' {
         $v = ConvertFrom-SemVer '1.2.3'
         $v.Major | Should -Be 1
@@ -47,7 +47,7 @@ Describe 'ConvertFrom-SemVer' {
     }
 }
 
-Describe 'ConvertFrom-TemplateVersion' {
+Describe 'ConvertFrom-TemplateVersion' -Tag 'Unit' {
     It 'parses a bare SemVer' {
         (ConvertFrom-TemplateVersion '1.2.3').Text | Should -Be '1.2.3'
     }
@@ -80,7 +80,7 @@ Describe 'ConvertFrom-TemplateVersion' {
     }
 }
 
-Describe 'Compare-SemVer' {
+Describe 'Compare-SemVer' -Tag 'Unit' {
     It '<Left> vs <Right> is <Expected>' -ForEach @(
         @{ Left = '1.0.0'; Right = '1.0.0'; Expected = 0 }
         @{ Left = '1.0.0'; Right = '1.0.1'; Expected = -1 }
@@ -111,7 +111,7 @@ Describe 'Compare-SemVer' {
     }
 }
 
-Describe 'Step-SemVer' {
+Describe 'Step-SemVer' -Tag 'Unit' {
     It '<Version> bumped by <Bump> is <Expected>' -ForEach @(
         @{ Version = '1.0.0'; Bump = 'patch'; Expected = '1.0.1' }
         @{ Version = '1.0.0'; Bump = 'minor'; Expected = '1.1.0' }

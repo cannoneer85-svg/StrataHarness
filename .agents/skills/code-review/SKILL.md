@@ -1,14 +1,15 @@
 ---
 name: code-review
-description: Review the changes since a fixed point (commit, branch, tag, or merge-base) along two axes — Standards (does the code follow this repo's documented coding standards?) and Spec (does the code match what the originating issue/spec asked for?). Runs both reviews in parallel sub-agents and reports them side by side. Use when the user wants to review a branch, a PR, work-in-progress changes, or asks to "review since X".
+description: Review the changes since a fixed point (commit, branch, tag, or merge-base) along two core axes — Standards (does the code follow this repo's documented coding standards?) and Spec (does the code match what the originating issue/spec asked for?) — plus an optional third axis: Adversary (presumption of failure) on Epic or high-risk tasks. Runs reviews in parallel sub-agents and reports them side by side. Use when the user wants to review a branch, a PR, work-in-progress changes, or asks to "review since X".
 ---
 
-Two-axis review of the changes between a fixed point and the working tree:
+Review of the changes between a fixed point and the working tree along two core axes, plus an optional third axis for high-risk changes:
 
 - **Standards** — does the code conform to this repo's documented coding standards?
 - **Spec** — does the code faithfully implement the originating issue / spec?
+- **Adversary** (optional, for Epic or high-risk tasks) — attacks the solution under a presumption of failure (race conditions, boundary breaches, unauthorized access, data loss).
 
-Both axes run as **parallel sub-agents** so they don't pollute each other's context, then this skill aggregates their findings.
+The axes run as **parallel sub-agents** so they don't pollute each other's context, then this skill aggregates their findings.
 
 The issue tracker should have been provided to you. If `docs/agents/issue-tracker.md` is missing, tell the user to run `/init-project`.
 
@@ -49,7 +50,7 @@ On top of whatever the repo documents, the Standards axis always carries the **s
 Each smell reads *what it is* → *how to fix*; match it against the diff:
 
 - **Mysterious Name** — a function, variable, or type whose name doesn't reveal what it does or holds. → rename it; if no honest name comes, the design's murky.
-- **Duplicated Code** — the same logic shape appears in more than one hunk or file in the change. → extract the shared shape, call it from both.
+- **Duplicated Code** — the same logic shape appears in more than one hunk or file in the change, or duplicates logic already present elsewhere in the repo. → extract the shared shape, call it from both; reuse or generalize the existing unit.
 - **Feature Envy** — a method that reaches into another object's data more than its own. → move the method onto the data it envies.
 - **Data Clumps** — the same few fields or params keep travelling together (a type wanting to be born). → bundle them into one type, pass that.
 - **Primitive Obsession** — a primitive or string standing in for a domain concept that deserves its own type. → give the concept its own small type.
@@ -60,7 +61,8 @@ Each smell reads *what it is* → *how to fix*; match it against the diff:
 - **Message Chains** — long `a.b().c().d()` navigation the caller shouldn't depend on. → hide the walk behind one method on the first object.
 - **Middle Man** — a class or function that mostly just delegates onward. → cut it, call the real target direct.
 - **Refused Bequest** — a subclass or implementer that ignores or overrides most of what it inherits. → drop the inheritance, use composition.
-- **Minimal-Diff Breaches** ([`minimal-diff`](../minimal-diff/SKILL.md)) — speculative classes, interfaces with a single implementer, home-rolled wheels where standard libraries or existing utilities exist, unjustified dependencies, or scattered patches instead of root-cause repair. → remove speculative abstractions, consolidate to root cause.
+
+**Minimal-Diff Breaches** ([`minimal-diff`](../minimal-diff/SKILL.md)) — speculative classes, a seam with only one adapter (count test adapters as adapters — see `codebase-design`), home-rolled wheels where standard libraries or existing utilities exist, unjustified dependencies, near-copies duplicating existing repo logic, or scattered patches instead of root-cause repair. → remove speculative abstractions, consolidate to root cause, adapt existing code.
 
 ### 4. Spawn sub-agents in parallel
 
@@ -68,29 +70,29 @@ Each smell reads *what it is* → *how to fix*; match it against the diff:
 
 - The change set from step 1: the diff command, the new-file list, and the commit list.
 - The list of standards-source files you found in step 3, **plus the smell baseline from step 3** pasted in full — the sub-agent has no other access to it.
-- The brief: "Report — per file/hunk where relevant — (a) every place the diff violates a documented standard: cite the standard (file + the rule); (b) any baseline smell or minimal-diff breach you spot (speculative abstractions, unjustified new dependencies, single-implementer interfaces, scattered patches instead of root-cause fix); and (c) any concurrency or boundary safety hazards. Distinguish hard violations from judgement calls — documented-standard breaches can be hard, but baseline smells are always judgement calls, and a documented repo standard overrides the baseline. Skip anything tooling enforces. Under 400 words."
+- The brief: "Report — per file/hunk where relevant — (a) every place the diff violates a documented standard: cite the standard (file + the rule); (b) any baseline smell or minimal-diff breach you spot (speculative abstractions, unjustified new dependencies, single-adapter seams without test stand-ins, near-copies duplicating existing code, scattered patches instead of root-cause fix); and (c) any concurrency or boundary safety hazards. Distinguish hard violations from judgement calls — documented-standard breaches can be hard, but baseline smells are always judgement calls, and a documented repo standard overrides the baseline. Do NOT run the repository test suite, integration tests, or build pipelines — testing and test execution belong to the caller/orchestrator; your role is static code review and standard compliance analysis only. Skip anything tooling enforces. Under 400 words."
 
 **Spec sub-agent prompt** — include:
 
 - The change set from step 1: the diff command, the new-file list, and the commit list.
 - The path or fetched contents of the spec, and the paths of the tickets.
-- The brief: "Report: (a) requirements the spec or tickets asked for that are missing or partial; (b) behaviour in the diff that wasn't asked for (scope creep); (c) requirements that look implemented but where the implementation looks wrong. Quote the spec or ticket line for each finding. Under 400 words."
+- The brief: "Report: (a) requirements the spec or tickets asked for that are missing or partial; (b) behaviour in the diff that wasn't asked for (scope creep); (c) requirements that look implemented but where the implementation looks wrong. Quote the spec or ticket line for each finding. Do NOT run the repository test suite or build pipelines — your role is static requirements verification against the diff only. Under 400 words."
 
 If the spec is missing, skip the Spec sub-agent and note this in the final report.
 
 **Adversary sub-agent (Epic & security-critical tasks only)**:
 For tasks on the Epic route, or changes modifying authentication, permissions, data migrations, or concurrent resources, spawn a third parallel sub-agent: **Adversary**.
-- Brief: "Act as an independent adversary with a presumption of failure. Examine the diff to identify up to 3 concrete failure scenarios: race conditions, unhandled failure/boundary states, resource exhaustion, authorization bypasses, or silent data loss. Quote file and line for each scenario. Under 400 words."
+- Brief: "Act as an independent adversary with a presumption of failure. Examine the diff to identify up to 3 concrete failure scenarios: race conditions, unhandled failure/boundary states, resource exhaustion, authorization bypasses, or silent data loss. Quote file and line for each scenario. Do NOT run the repository test suite or build pipelines — your role is static failure scenario and risk analysis against the diff only. Under 400 words."
 
 ### 5. Aggregate
 
-Present the reports under `## Standards`, `## Spec`, and (if spawned) `## Adversary` headings, verbatim or lightly cleaned. Do **not** merge or rerank findings across headings — the axes are deliberately separate (see _Why two axes_).
+Present the reports under `## Standards`, `## Spec`, and (if spawned) `## Adversary` headings, verbatim or lightly cleaned. Do **not** merge or rerank findings across headings — the axes are deliberately separate (see _Why three axes_).
 
 End with a one-line summary: total findings per axis, and the worst issue _within each axis_ (if any). Don't pick a single winner across axes — that's the reranking the separation exists to prevent.
 
 ### 6. Fix, then stop
 
-Fix the findings: every hard violation and spec gap, and each judgement call you agree with. For a finding you leave as is, give the reason in one line. Re-run the tests, then show the user what you fixed and what you left.
+Fix every hard violation, spec gap, and critical Adversary finding, and each judgement call you agree with. For a finding you leave as is, give the reason in one line. Re-run ONLY targeted tests for the changed files (or lightweight validators like `Test-Template.ps1`/lint); the full heavy repository test suite is reserved for the close-task stage. Then show the user what you fixed and what you left.
 
 **At the stop gate**, explicitly present the user with the available next-step options and commands so they know what to do next:
 1. **Full task close** (`/close-task`, or commands like «закрывай задачу», «фиксируй», «мерджим»): runs preflight checks, generates the handoff document and updates `LATEST.md`, cleans finished scratch files and removes `.scratch/<feature>/` when complete, and creates a single conventional local git commit (never pushes).
@@ -99,7 +101,7 @@ Fix the findings: every hard violation and spec gap, and each judgement call you
 
 Then stop and wait. `/handoff`, `/close-task` and any commit run only on the user's explicit command.
 
-## Why two axes
+## Why three axes
 
 A change can pass one axis and fail the other:
 
@@ -107,3 +109,5 @@ A change can pass one axis and fail the other:
 - Code that does exactly what the issue asked but breaks the project's conventions → **Spec pass, Standards fail.**
 
 Reporting them separately stops one axis from masking the other.
+
+Why the Adversary axis: presumption of failure. The Standards sub-agent checks compliance against documented repo rules; the Spec sub-agent checks whether the code delivers what was promised; the Adversary sub-agent specifically attacks the solution looking for malicious inputs, race conditions, edge-case crashes, boundary breaches, and unauthorized access.

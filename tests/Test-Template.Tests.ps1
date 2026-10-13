@@ -36,7 +36,7 @@ BeforeAll {
     $script:Intro = "# Changelog`n`nIntro text.`n`n## [Unreleased]`n"
 }
 
-Describe 'Test-Template.ps1 version checks' {
+Describe 'Test-Template.ps1 version checks' -Tag 'Unit' {
     It 'passes and skips when VERSION and CHANGELOG.md are absent (Project)' {
         $result = Invoke-TestTemplate (New-FixtureRepo)
         $result.ExitCode | Should -Be 0
@@ -92,3 +92,28 @@ Describe 'Test-Template.ps1 version checks' {
         (Invoke-TestTemplate (New-FixtureRepo -Version 'garbage')).ExitCode | Should -Be 1
     }
 }
+
+Describe 'Test-Template.ps1 legacy quota checks' -Tag 'Unit' {
+    It 'passes when fixture repo has clean AGENTS.md' {
+        $result = Invoke-TestTemplate (New-FixtureRepo)
+        $result.ExitCode | Should -Be 0
+        $result.Output | Should -Not -Match '\[quotas\]'
+    }
+
+    It 'detects violation and exits with 1 when AGENTS.md contains legacy numeric question quotas: <_>' -ForEach @(
+        '2–4 questions',
+        '2–4 вопроса',
+        '2–4 вопросов',
+        'ровно 1 раунд',
+        'apply its round quota',
+        'interview quotas'
+    ) {
+        $root = New-FixtureRepo
+        Set-Content -LiteralPath (Join-Path $root 'AGENTS.md') -Value "# Agent rules`nLegacy quota: $_`n"
+        $result = Invoke-TestTemplate $root
+        $result.ExitCode | Should -Be 1
+        $result.Output | Should -Match '\[quotas\]'
+        $result.Output | Should -Match ([regex]::Escape($_))
+    }
+}
+

@@ -28,7 +28,8 @@ Multi-Session wins whenever a human check is needed; otherwise take the first ro
 
 - Drive the work with **/tdd** (red → green → refactor) at the seams agreed in the spec.
 - Design deep modules with narrow interfaces (**codebase-design**).
-- Run typechecking and unit tests often, and the full test suite once at the end.
+- Keep the solution scope per **minimal-diff**; forbidden zones (security, authorization, boundary validation, error handling, backward compatibility, behavior tests) are never simplified.
+- Run typechecking and targeted unit tests per seam during implementation; running full heavy integration or E2E suites is reserved for completion (§5) and close-task preflight.
 - Leave every change uncommitted; committing belongs to `/close-task`.
 
 **Ticket status.** Move each ticket's **Status** `ready-for-agent → in-progress → done`, and update `.scratch/<feature>/TICKETS.md` in the same edit. How to update the map — node classes, table row, the frontier (`blocked` → `ready`) — is defined once in [tickets-map-template.md § Rules](../to-tickets/references/tickets-map-template.md); follow its **Sync** rule. Under Sequential Subagents only the Orchestrator does this.

@@ -196,7 +196,7 @@ All notable changes documented here.
     }
 }
 
-Describe 'Invoke-Release.ps1 -Plan Conventional Commits classification' {
+Describe 'Invoke-Release.ps1 -Plan Conventional Commits classification' -Tag 'Integration' {
     It 'proposes MINOR and section Added for feat commits' {
         $fix = New-ReleaseFixture -InitialVersion '1.0.0'
         Set-Content -LiteralPath (Join-Path $fix 'new-feature.txt') -Value 'feature'
@@ -304,7 +304,7 @@ Describe 'Invoke-Release.ps1 -Plan Conventional Commits classification' {
     }
 }
 
-Describe 'Invoke-Release.ps1 -Plan non-conventional commits' {
+Describe 'Invoke-Release.ps1 -Plan non-conventional commits' -Tag 'Integration' {
     It 'places non-conventional commits in Other and adds a warning' {
         $fix = New-ReleaseFixture -InitialVersion '1.0.0'
         Set-Content -LiteralPath (Join-Path $fix 'misc.txt') -Value 'misc'
@@ -325,7 +325,7 @@ Describe 'Invoke-Release.ps1 -Plan non-conventional commits' {
     }
 }
 
-Describe 'Invoke-Release.ps1 -Plan deleted skill directory' {
+Describe 'Invoke-Release.ps1 -Plan deleted skill directory' -Tag 'Integration' {
     It 'flags deleted skill folder as MAJOR candidate' {
         $fix = New-ReleaseFixture -InitialVersion '1.0.0'
         # sample-skill was created in baseline fixture; now remove it
@@ -344,7 +344,7 @@ Describe 'Invoke-Release.ps1 -Plan deleted skill directory' {
     }
 }
 
-Describe 'Invoke-Release.ps1 -Plan bump and version overrides' {
+Describe 'Invoke-Release.ps1 -Plan bump and version overrides' -Tag 'Integration' {
     It 'overrides calculated bump with -Bump' {
         $fix = New-ReleaseFixture -InitialVersion '1.0.0'
         Set-Content -LiteralPath (Join-Path $fix 'feat.txt') -Value 'f'
@@ -389,7 +389,7 @@ Describe 'Invoke-Release.ps1 -Plan bump and version overrides' {
     }
 }
 
-Describe 'Invoke-Release.ps1 -Plan precondition failures' {
+Describe 'Invoke-Release.ps1 -Plan precondition failures' -Tag 'Integration' {
     It 'fails P1 when working tree is dirty' {
         $fix = New-ReleaseFixture -InitialVersion '1.0.0'
         Set-Content -LiteralPath (Join-Path $fix 'feat.txt') -Value 'f'
@@ -451,7 +451,7 @@ Describe 'Invoke-Release.ps1 -Plan precondition failures' {
     }
 }
 
-Describe 'Invoke-Release.ps1 -Plan file and history safety' {
+Describe 'Invoke-Release.ps1 -Plan file and history safety' -Tag 'Integration' {
     It 'does not modify tracked files, create commits, or create tags' {
         $fix = New-ReleaseFixture -InitialVersion '1.0.0'
         Set-Content -LiteralPath (Join-Path $fix 'feat.txt') -Value 'f'
@@ -485,7 +485,7 @@ Describe 'Invoke-Release.ps1 -Plan file and history safety' {
     }
 }
 
-Describe 'Invoke-Release.ps1 -Apply release commit, tag, and push' {
+Describe 'Invoke-Release.ps1 -Apply release commit, tag, and push' -Tag 'Integration' {
     It 'creates single commit, annotated tag, and pushes to bare origin' {
         $bare = New-BareOrigin
         $fix = New-ReleaseFixture -InitialVersion '1.0.0'
@@ -607,7 +607,7 @@ Describe 'Invoke-Release.ps1 -Apply release commit, tag, and push' {
     }
 }
 
-Describe 'Invoke-Release.ps1 -Apply precondition P6: origin/main ahead' {
+Describe 'Invoke-Release.ps1 -Apply precondition P6: origin/main ahead' -Tag 'Integration' {
     It 'fails before creating commit or tag when origin/main is ahead' {
         $bare = New-BareOrigin
         $fix = New-ReleaseFixture -InitialVersion '1.0.0'
@@ -646,7 +646,7 @@ Describe 'Invoke-Release.ps1 -Apply precondition P6: origin/main ahead' {
     }
 }
 
-Describe 'Invoke-Release.ps1 -Apply push failures and -PushOnly recovery' {
+Describe 'Invoke-Release.ps1 -Apply push failures and -PushOnly recovery' -Tag 'Integration' {
     It 'preserves local commit and tag when push fails, and succeeds on -PushOnly once fixed' {
         $fix = New-ReleaseFixture -InitialVersion '1.0.0'
         # Add broken remote
@@ -698,7 +698,7 @@ Describe 'Invoke-Release.ps1 -Apply push failures and -PushOnly recovery' {
     }
 }
 
-Describe 'Invoke-Release.ps1 -Undo rollback behavior' {
+Describe 'Invoke-Release.ps1 -Undo rollback behavior' -Tag 'Integration' {
     It 'undoes local tag and commit when unpushed' {
         $fix = New-ReleaseFixture -InitialVersion '1.0.0'
         Set-Content -LiteralPath (Join-Path $fix 'feature.txt') -Value 'feat'
@@ -766,7 +766,7 @@ Describe 'Invoke-Release.ps1 -Undo rollback behavior' {
     }
 }
 
-Describe 'Invoke-Release.ps1 code safety inspection' {
+Describe 'Invoke-Release.ps1 code safety inspection' -Tag 'Unit' {
     It 'contains no --force or --force-with-lease flags' {
         $scriptContent = Get-Content -LiteralPath $script:ReleaseScript -Raw -Encoding utf8
         $scriptContent | Should -Not -Match '--force\b'
@@ -774,7 +774,7 @@ Describe 'Invoke-Release.ps1 code safety inspection' {
     }
 }
 
-Describe 'Invoke-Release.ps1 -Notes release notes extraction' {
+Describe 'Invoke-Release.ps1 -Notes release notes extraction' -Tag 'Integration' {
     It 'returns notes body and title for matching tag and CHANGELOG section' {
         $fix = New-ReleaseFixture -InitialVersion '1.0.0'
         # The fixture already creates CHANGELOG with:
@@ -901,7 +901,7 @@ Describe 'Invoke-Release.ps1 -Notes release notes extraction' {
     }
 }
 
-Describe 'GitHub release workflow inspection' {
+Describe 'GitHub release workflow inspection' -Tag 'Unit' {
     It 'exists and has valid release configuration' {
         $workflowPath = Join-Path $script:TemplateRoot '.github' 'workflows' 'release.yml'
         Test-Path -LiteralPath $workflowPath -PathType Leaf | Should -BeTrue

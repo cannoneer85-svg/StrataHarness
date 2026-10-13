@@ -14,7 +14,7 @@ BeforeAll {
     $script:FeatureTemplatePath = Join-Path $script:RepoRoot '.github' 'ISSUE_TEMPLATE' 'feature.yml'
 }
 
-Describe 'CI Workflow (.github/workflows/ci.yml)' {
+Describe 'CI Workflow (.github/workflows/ci.yml)' -Tag 'Unit' {
     It 'exists and has read-only contents permission' {
         Test-Path -LiteralPath $script:CiWorkflowPath -PathType Leaf | Should -BeTrue
         $content = Get-Content -LiteralPath $script:CiWorkflowPath -Raw -Encoding utf8
@@ -57,7 +57,7 @@ Describe 'CI Workflow (.github/workflows/ci.yml)' {
     }
 }
 
-Describe 'PR Title Validation' {
+Describe 'PR Title Validation' -Tag 'Unit' {
     BeforeAll {
         $ciContent = Get-Content -LiteralPath $script:CiWorkflowPath -Raw -Encoding utf8
         $match = [regex]::Match($ciContent, '\$pattern\s*=\s*''(?<pat>[^'']+)''')
@@ -139,7 +139,7 @@ Describe 'PR Title Validation' {
     }
 }
 
-Describe 'Dependabot Configuration (.github/dependabot.yml)' {
+Describe 'Dependabot Configuration (.github/dependabot.yml)' -Tag 'Unit' {
     It 'exists and has version 2 with weekly github-actions updates' {
         Test-Path -LiteralPath $script:DependabotPath -PathType Leaf | Should -BeTrue
         $content = Get-Content -LiteralPath $script:DependabotPath -Raw -Encoding utf8
@@ -150,7 +150,7 @@ Describe 'Dependabot Configuration (.github/dependabot.yml)' {
     }
 }
 
-Describe 'Contributor Templates' {
+Describe 'Contributor Templates' -Tag 'Unit' {
     It 'PR template exists and has all required checklist items' {
         Test-Path -LiteralPath $script:PrTemplatePath -PathType Leaf | Should -BeTrue
         $content = Get-Content -LiteralPath $script:PrTemplatePath -Raw -Encoding utf8

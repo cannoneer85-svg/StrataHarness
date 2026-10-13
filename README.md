@@ -107,7 +107,7 @@ In the initial response, the agent announces the **Type** and **Category** with 
   - `Fog (Туман)` — path is unclear; routed to `wayfinder` to resolve ambiguity.
 
 ### 2. Routes and Interview Rounds
-- **Minor:** 1 round (Outline & happy path) → In-Place implementation → review → close.
+- **Minor:** 1 round (Outline and happy path) → In-Place implementation → review → close.
 - **Feature:** 2 rounds (Happy path + Errors & edge cases) → specification in `docs/specs/` → tickets in `.scratch/<feature>/issues/` with dependency graph `TICKETS.md` → implementation → review → close.
 - **Epic:** 3 rounds (Happy path + Errors & edge cases + NFR) → specification → tickets → Orchestrator implementation (isolated subagents per ticket) → review → close.
 - **Analysis:** 1 short round (4 points) → research → draft in `docs/analysis/` → review → close.

@@ -27,8 +27,11 @@ Please take a moment to review this document before submitting contributions.
      # 1. Template integrity validation (must print OK and exit 0)
      pwsh -NoProfile -File .agents/scripts/Test-Template.ps1
 
-     # 2. Pester test suite (all tests must pass)
-     pwsh -NoProfile -Command "Invoke-Pester -Path tests -Output Detailed"
+     # 2. Fast unit tests during development (< 20s)
+     pwsh -NoProfile -Command "Invoke-Pester -Path tests -Tag 'Unit'"
+
+     # 3. Full test suite including integration tests before submitting
+     pwsh -NoProfile -Command "Invoke-Pester -Path tests"
      ```
 4. **Submit Pull Request:**
    - Open a PR against `main`.

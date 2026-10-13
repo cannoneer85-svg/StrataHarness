@@ -24,7 +24,7 @@ In your first message, announce the **Type** and, for development, the **Categor
 | Epic | several modules or a new service; core architecture or cross-cutting contracts change; hardware or protocol integration; many unknowns |
 | Fog (Туман) | the path to the result is not visible and will not fit in one session |
 
-Re-categorise during the interview when answers reveal a different scale, up or down: announce the new Category with its reason and apply its round quota from then on.
+Re-categorise during the interview when answers reveal a different scale, up or down: announce the new Category with its reason and apply its round themes from then on.
 
 ## Stages
 
@@ -51,8 +51,8 @@ Each stage ends at a stop gate. Read the stage's `SKILL.md` at the path below wh
 
 - **No question cap:** ask until no open architectural, contract or MVP decisions remain; resolve implementation trivia with sensible defaults yourself.
 - **Adaptive follow-ups:** follow-up questions belong to the active round's theme; settle current decisions before moving to the next theme.
-- **User override:** the user may halt the interview at any time with a stop phrase such as «хватит / пиши спеку».
-- **Escalation signal:** if a Minor interview uncovers > 4–5 open decision questions, announce re-categorisation to Feature immediately and run Round 2.
+- **User override:** the user may halt the interview at any time with a stop phrase such as «хватит / пиши спеку». The stop phrase closes all remaining mandatory rounds immediately; record the open frontier as assumptions in `.scratch/<feature>/OPEN_QUESTIONS.md`, and `/to-spec` lists them under Further Notes.
+- **Escalation signal:** if a Minor interview uncovers more than 4 open decision questions, announce re-categorisation to Feature immediately and run Round 2.
 - Ask interview questions with the harness's interactive question tool (Antigravity: `ask_question`) when it has one; grill-with-docs defines the rounds.
 - Offer the spec only after every mandatory round of the current Category is done.
 

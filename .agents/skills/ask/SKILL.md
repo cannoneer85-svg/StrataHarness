@@ -7,7 +7,7 @@ description: Ask which skill or flow fits your situation. A router over the skil
 
 When uncertain which route, stage, or helper skill fits the task, `/ask` guides the decision.
 
-Process rules, invariant stages, and interview quotas live in the root [`AGENTS.md`](../../../AGENTS.md). Glossary terms are defined in [`.agents/CONTEXT.md`](../../CONTEXT.md). The full catalog of skills with categories and invocation modes lives in the [Skill Registry](../../SKILLS.md).
+Process rules, invariant stages, and interview rules and round themes live in the root [`AGENTS.md`](../../../AGENTS.md). Glossary terms are defined in [`.agents/CONTEXT.md`](../../CONTEXT.md). The full catalog of skills with categories and invocation modes lives in the [Skill Registry](../../SKILLS.md).
 
 ## Step 0 and routes
 
@@ -57,7 +57,7 @@ Weigh the signals: modules touched, new entities or contracts, external integrat
   - Greenfield initiative: "We want an automated AI evaluation pipeline, but haven't chosen the models, test harness, dataset storage, or CI runner."
   - Untangling a legacy monolithic system with undocumented dependencies into bounded contexts.
 
-*Note on interview quotas:* See the Routes table in [`AGENTS.md`](../../../AGENTS.md) for mandatory question and round counts per Category.
+*Note on interview rounds:* See the Routes table in [`AGENTS.md`](../../../AGENTS.md) for mandatory round themes per Category.
 
 ### Analysis flow
 

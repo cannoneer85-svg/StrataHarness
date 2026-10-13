@@ -15,6 +15,8 @@
       7. (spec 0002, D8) If VERSION exists: it is a valid SemVer (X.Y.Z or X.Y.Z-rc.N); if CHANGELOG.md
          also exists and has version sections, the top one equals VERSION; with VERSION 0.0.0 there may be
          no version sections. Without VERSION (a Project) the rule is skipped.
+      8. Active agent instructions (.agents/skills/*, .agents/CONTEXT.md, AGENTS.md) contain no legacy numeric question quota phrasing.
+      9. The 'release' skill (if present) is listed in the '## Только Шаблон' section of .agents/SKILLS.md.
 
     The repository root is resolved relative to this script, so it can be run from any folder.
     Prints every violation and exits with 0 (no violations) or 1 (violations found).
@@ -207,7 +209,34 @@ if (Test-Path -LiteralPath $VersionPath -PathType Leaf) {
     Write-Output 'SKIP [version] VERSION does not exist (Project).'
 }
 
-# --- Rule 8: release skill in 'Только Шаблон' section -----------------------------------
+# --- Rule 8: legacy numeric quota phrasing ---------------------------------------------
+
+$quotaRegex = [regex]'(?i)\b\d+\s*[–—-]\s*\d+\s+(?:questions|вопрос(?:а|ов)?)\b|ровно\s+\d+\s+раунд|\bapply its round quota\b|\binterview quotas\b'
+$activeAgentFiles = [System.Collections.Generic.List[string]]::new()
+
+if (Test-Path -LiteralPath $RootAgentsPath -PathType Leaf) {
+    $activeAgentFiles.Add($RootAgentsPath)
+}
+if (Test-Path -LiteralPath $AgentsDir -PathType Container) {
+    Get-ChildItem -LiteralPath $AgentsDir -File -Filter '*.md' |
+        ForEach-Object { $activeAgentFiles.Add($_.FullName) }
+}
+if (Test-Path -LiteralPath $SkillsDir -PathType Container) {
+    Get-ChildItem -LiteralPath $SkillsDir -File -Recurse -Filter '*.md' |
+        ForEach-Object { $activeAgentFiles.Add($_.FullName) }
+}
+
+foreach ($filePath in ($activeAgentFiles | Select-Object -Unique)) {
+    if (-not (Test-Path -LiteralPath $filePath -PathType Leaf)) { continue }
+    $content = [string](Get-Content -LiteralPath $filePath -Raw -Encoding utf8)
+    if ([string]::IsNullOrWhiteSpace($content)) { continue }
+    $foundMatches = $quotaRegex.Matches($content)
+    foreach ($match in $foundMatches) {
+        Add-Violation 'quotas' "File '$(Get-RelativePath $filePath)' contains legacy numeric quota phrasing: '$($match.Value)'"
+    }
+}
+
+# --- Rule 9: release skill in 'Только Шаблон' section -----------------------------------
 
 if ($skillFolders -contains 'release') {
     if (Test-Path -LiteralPath $RegistryPath -PathType Leaf) {

@@ -167,9 +167,10 @@ function Assert-MainBranch {
     }
 }
 
-function Assert-TestsAndChecks {
+function Assert-TestsAndChecks([switch]$SkipPester, [string]$HeadSha = '') {
     $shouldSkipChecks = $SkipChecks -or ($env:RELEASE_SKIP_CHECKS -eq '1')
     if (-not $shouldSkipChecks) {
+        Write-Output "[release] Verifying template integrity (Test-Template.ps1)..."
         $testTemplateScript = Join-Path $RepoRoot '.agents' 'scripts' 'Test-Template.ps1'
         if (Test-Path -LiteralPath $testTemplateScript -PathType Leaf) {
             $ttOutput = & pwsh -NoProfile -File $testTemplateScript 2>&1
@@ -178,11 +179,18 @@ function Assert-TestsAndChecks {
             }
         }
 
-        $testsDir = Join-Path $RepoRoot 'tests'
-        if (Test-Path -LiteralPath $testsDir -PathType Container) {
-            $pesterOutput = & pwsh -NoProfile -Command "Invoke-Pester -Path '$testsDir' -Output None" 2>&1
-            if ($LASTEXITCODE -ne 0) {
-                Fail-Precondition 'P3' "Pester test suite failed."
+        if ($SkipPester) {
+            $headMsg = if ($HeadSha) { " for commit $HeadSha" } else { "" }
+            Write-Output "[release] Pester test suite skipped in Apply mode (already validated in Plan mode$headMsg)."
+        } else {
+            $testsDir = Join-Path $RepoRoot 'tests'
+            if (Test-Path -LiteralPath $testsDir -PathType Container) {
+                Write-Output "[release] Running test suite (Pester)..."
+                $pesterOutput = & pwsh -NoProfile -Command "Invoke-Pester -Configuration @{ Run = @{ Path = '$testsDir'; Exit = `$true }; Output = @{ Verbosity = 'None' } }" 2>&1
+                if ($LASTEXITCODE -ne 0) {
+                    Fail-Precondition 'P3' "Pester test suite failed."
+                }
+                Write-Output "[release] Test suite passed."
             }
         }
     }
@@ -194,11 +202,13 @@ function Invoke-Plan {
     }
 
     # --- Preconditions P1 - P3 ---------------------------------------------------------
+    Write-Output "[release] Checking preconditions (P1-P3)..."
     Assert-CleanWorkingTree
     Assert-MainBranch
     Assert-TestsAndChecks
 
     # --- Find previous tag --------------------------------------------------------------
+    Write-Output "[release] Resolving previous release tag..."
     $prevTag = $null
     $tagResult = & git -C $RepoRoot describe --tags --abbrev=0 --match="v*" 2>$null
     if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($tagResult)) {
@@ -212,6 +222,7 @@ function Invoke-Plan {
     }
 
     # --- Precondition P4 & Commit collection --------------------------------------------
+    Write-Output "[release] Collecting commits since last tag..."
     $logArgs = @('-C', $RepoRoot, 'log', '--reverse', '--format=%H%x1f%s%x1f%b%x1e')
     if ($prevTag) {
         $logArgs += "$prevTag..HEAD"
@@ -235,6 +246,7 @@ function Invoke-Plan {
     }
 
     # Conventional commit parsing
+    Write-Output "[release] Parsing conventional commits..."
     $knownTypes = @('feat', 'fix', 'docs', 'style', 'refactor', 'perf', 'test', 'build', 'ci', 'chore', 'revert')
     $ccPattern = '^(?<type>[a-zA-Z]+)(?:\((?<scope>[^)\r\n]+)\))?(?<breaking>!)?:\s+(?<desc>.*)$'
 
@@ -366,6 +378,7 @@ function Invoke-Plan {
     }
 
     # --- Calculate proposed bump -------------------------------------------------------
+    Write-Output "[release] Computing SemVer bump and draft release notes..."
     $hasMajorVote = @($commits | Where-Object { $_.BumpVote -eq 'major' }).Count -gt 0
     $hasMinorVote = @($commits | Where-Object { $_.BumpVote -eq 'minor' }).Count -gt 0
 
@@ -460,6 +473,7 @@ function Invoke-Plan {
         PreviousVersion       = $baseVersion
         PreviousTag           = $prevTag
         HeadSha               = $headSha
+        ChecksValidated       = (-not ($SkipChecks -or ($env:RELEASE_SKIP_CHECKS -eq '1')))
         BumpType              = $effectiveBump
         ProposedBump          = $proposedBump
         BumpSource            = $bumpSource
@@ -486,6 +500,7 @@ function Invoke-Plan {
         CreatedAt             = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
     }
 
+    Write-Output "[release] Saving release plan and draft notes to .scratch/release/..."
     $planJsonContent = $planData | ConvertTo-Json -Depth 10
     Set-Content -LiteralPath $planJsonPath -Value $planJsonContent -Encoding utf8
     Set-Content -LiteralPath $notesDraftPath -Value $notesContent -Encoding utf8
@@ -534,15 +549,14 @@ function Invoke-Apply {
         throw "Notes file '$NotesFile' is empty."
     }
 
+    Write-Output "[release] Checking working tree and branch (P1-P2)..."
     # P1: Clean working tree
     Assert-CleanWorkingTree
 
     # P2: On branch main
     Assert-MainBranch
 
-    # P3: Tests and validators pass
-    Assert-TestsAndChecks
-
+    Write-Output "[release] Checking release plan and HEAD commit..."
     # Verify plan HEAD if plan.json exists
     $planJsonPath = Join-Path $RepoRoot '.scratch' 'release' 'plan.json'
     $planObj = $null
@@ -560,12 +574,22 @@ function Invoke-Apply {
     }
     $currentHeadSha = ([string]$currentHeadSha).Trim()
 
+    $planMatchesHead = $false
     if ($planObj -and $planObj.PSObject.Properties['HeadSha'] -and -not [string]::IsNullOrWhiteSpace($planObj.HeadSha)) {
         $expectedHead = [string]$planObj.HeadSha.Trim()
         if ($currentHeadSha -ne $expectedHead) {
             Fail-Precondition 'HEAD' "HEAD has changed since release plan was generated (was $expectedHead, now $currentHeadSha). Please re-run -Plan."
         }
+        $checksWereValidated = ($planObj.PSObject.Properties['ChecksValidated'] -and ($planObj.ChecksValidated -eq $true))
+        if ($checksWereValidated) {
+            $planMatchesHead = $true
+        }
     }
+
+    # P3: Tests and validators pass
+    # If plan was generated for the exact current HEAD, full Pester test suite was already validated during -Plan.
+    # We skip Pester and only run fast structural validation (Test-Template.ps1).
+    Assert-TestsAndChecks -SkipPester:$planMatchesHead -HeadSha $currentHeadSha
 
     # Determine target version
     $targetVer = $null
@@ -585,6 +609,7 @@ function Invoke-Apply {
     }
     $targetTag = "v$targetVer"
 
+    Write-Output "[release] Checking target tag and remote status for $targetTag (P5-P6)..."
     # P5: Target tag does not already exist locally
     $existingTag = & git -C $RepoRoot tag -l $targetTag 2>$null
     if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($existingTag)) {
@@ -615,6 +640,7 @@ function Invoke-Apply {
         }
     }
 
+    Write-Output "[release] Updating VERSION, CHANGELOG.md, and .agents/SKILLS.md..."
     # Update VERSION
     $versionFilePath = Join-Path $RepoRoot 'VERSION'
     Set-Content -LiteralPath $versionFilePath -Value "$targetVer`n" -Encoding utf8 -NoNewline
@@ -657,6 +683,7 @@ function Invoke-Apply {
     }
 
     # Create release commit containing only VERSION, CHANGELOG.md, .agents/SKILLS.md
+    Write-Output "[release] Creating release commit (chore(release): v$targetVer)..."
     & git -C $RepoRoot add -- VERSION CHANGELOG.md .agents/SKILLS.md
     $commitOut = & git -C $RepoRoot commit -m "chore(release): v$targetVer" 2>&1
     if ($LASTEXITCODE -ne 0) {
@@ -665,6 +692,7 @@ function Invoke-Apply {
     $releaseCommitSha = (& git -C $RepoRoot rev-parse HEAD).Trim()
 
     # Create annotated tag
+    Write-Output "[release] Creating annotated tag '$targetTag'..."
     $tagOut = & git -C $RepoRoot tag -a $targetTag -m $Title 2>&1
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to create annotated tag '$targetTag': $tagOut"
@@ -672,6 +700,7 @@ function Invoke-Apply {
 
     # Push to origin atomically if origin is configured
     if ($hasOrigin) {
+        Write-Output "[release] Pushing main and $targetTag to origin..."
         $pushOut = & git -C $RepoRoot push --atomic origin main $targetTag 2>&1
         if ($LASTEXITCODE -ne 0) {
             Write-Error "Release commit $releaseCommitSha ($targetTag) created locally, but failed to push to 'origin':`n$($pushOut -join "`n")"
@@ -686,6 +715,7 @@ function Invoke-Apply {
 }
 
 function Invoke-PushOnly {
+    Write-Output "[release] Verifying push prerequisites..."
     Assert-CleanWorkingTree
     Assert-MainBranch
 
@@ -752,6 +782,7 @@ function Invoke-PushOnly {
         }
     }
 
+    Write-Output "[release] Pushing main and $targetTag to origin..."
     $pushOut = & git -C $RepoRoot push --atomic origin main $targetTag 2>&1
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Failed to push to 'origin':`n$($pushOut -join "`n")"
@@ -763,6 +794,7 @@ function Invoke-PushOnly {
 }
 
 function Invoke-Undo {
+    Write-Output "[release] Verifying undo prerequisites..."
     Assert-CleanWorkingTree
 
     # Check HEAD commit
@@ -803,6 +835,7 @@ function Invoke-Undo {
         }
     }
 
+    Write-Output "[release] Undoing local tag and release commit..."
     # Delete local tag
     $delTagOut = & git -C $RepoRoot tag -d $targetTag 2>&1
     if ($LASTEXITCODE -ne 0) {

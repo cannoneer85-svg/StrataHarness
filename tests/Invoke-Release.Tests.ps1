@@ -40,7 +40,7 @@ BeforeAll {
         # Dummy sample skill to allow testing deleted skill directory
         $dummySkillDir = Join-Path $resolved '.agents' 'skills' 'sample-skill'
         New-Item -ItemType Directory -Path $dummySkillDir -Force | Out-Null
-        Set-Content -LiteralPath (Join-Path $dummySkillDir 'SKILL.md') -Value "---\nname: sample-skill\n---\n# Sample" -Encoding utf8
+        Set-Content -LiteralPath (Join-Path $dummySkillDir 'SKILL.md') -Value "---`nname: sample-skill`n---`n# Sample`n" -Encoding utf8
 
         # .gitignore
         Set-Content -LiteralPath (Join-Path $resolved '.gitignore') -Value ".scratch/`n" -Encoding utf8
@@ -65,7 +65,7 @@ All notable changes documented here.
 
         # Registry and AGENTS files
         $skillsHeader = if ($InitialVersion) { "- **template-version:** ``v$InitialVersion```n`n" } else { "" }
-        Set-Content -LiteralPath (Join-Path $resolved '.agents' 'SKILLS.md') -Value "$skillsHeader# Registry`n`n| [release](skills/release/SKILL.md) | Release | ручной | свой | active |`n| [sample-skill](skills/sample-skill/SKILL.md) | Sample | авто | свой | active |`n" -Encoding utf8
+        Set-Content -LiteralPath (Join-Path $resolved '.agents' 'SKILLS.md') -Value "$skillsHeader# Registry`n`n## Только Шаблон`n`n| [release](skills/release/SKILL.md) | Release | ручной | свой | active |`n`n## Навыки`n`n| [sample-skill](skills/sample-skill/SKILL.md) | Sample | авто | свой | active |`n" -Encoding utf8
         Set-Content -LiteralPath (Join-Path $resolved 'AGENTS.md') -Value "# Agents`n" -Encoding utf8
 
         # Commit initial state
@@ -583,6 +583,84 @@ Describe 'Invoke-Release.ps1 -Apply release commit, tag, and push' -Tag 'Integra
 
         (Get-Content -LiteralPath (Join-Path $fix 'VERSION') -Raw -Encoding utf8).Trim() | Should -Be '1.1.0'
         (& git -C $fix tag -l 'v1.1.0') | Should -Be 'v1.1.0'
+    }
+
+    It 'skips Pester in Apply mode when plan.json exists with ChecksValidated and HeadSha matches current HEAD' {
+        $fix = New-ReleaseFixture -InitialVersion '1.0.0'
+        Set-Content -LiteralPath (Join-Path $fix 'feat.txt') -Value 'feat'
+        & git -C $fix add feat.txt
+        & git -C $fix commit -m "feat: fast apply test" --quiet
+
+        # Run -Plan WITHOUT -SkipChecks so ChecksValidated is recorded as true
+        $planRes = Invoke-ReleasePlan -RepoRoot $fix
+        $planRes.ExitCode | Should -Be 0
+
+        # Run -Apply WITHOUT -SkipChecks. Because plan matches HEAD and ChecksValidated is true, Pester is skipped.
+        $notesFile = Join-Path $fix '.scratch/release/notes.draft.md'
+        $applyRes = Invoke-ReleaseApply -RepoRoot $fix -NotesFile $notesFile -Title "Fast Apply Test"
+        $applyRes.ExitCode | Should -Be 0
+        $applyRes.Output | Should -Match 'Pester test suite skipped in Apply mode'
+        (& git -C $fix tag -l 'v1.1.0') | Should -Be 'v1.1.0'
+    }
+
+    It 'does not skip Pester in Apply mode when plan.json was generated with -SkipChecks' {
+        $fix = New-ReleaseFixture -InitialVersion '1.0.0'
+        Set-Content -LiteralPath (Join-Path $fix 'feat.txt') -Value 'feat'
+        & git -C $fix add feat.txt
+        & git -C $fix commit -m "feat: plan skip checks test" --quiet
+
+        # Run -Plan WITH -SkipChecks
+        $planRes = Invoke-ReleasePlan -RepoRoot $fix -SkipChecks
+        $planRes.ExitCode | Should -Be 0
+
+        # Add a dummy failing test in tests/ to prove Pester is NOT skipped when Apply runs without -SkipChecks
+        $fixtureTestsDir = Join-Path $fix 'tests'
+        New-Item -ItemType Directory -Path $fixtureTestsDir -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $fixtureTestsDir 'Dummy.Tests.ps1') -Value "Describe 'Dummy' { It 'fails' { 1 | Should -Be 2 } }" -Encoding utf8
+        & git -C $fix add tests/Dummy.Tests.ps1
+        & git -C $fix commit -m "test: add dummy test" --quiet
+
+        # Update plan.json HeadSha to the new commit so HEAD matches, but ChecksValidated is false
+        $newHead = (& git -C $fix rev-parse HEAD).Trim()
+        $planJsonPath = Join-Path $fix '.scratch/release/plan.json'
+        $planData = Get-Content -LiteralPath $planJsonPath -Raw -Encoding utf8 | ConvertFrom-Json
+        $planData.HeadSha = $newHead
+        Set-Content -LiteralPath $planJsonPath -Value ($planData | ConvertTo-Json -Depth 5) -Encoding utf8
+
+        # Run -Apply WITHOUT -SkipChecks: because plan had -SkipChecks, Apply must run Pester and fail on dummy test
+        $notesFile = Join-Path $fix '.scratch/release/notes.draft.md'
+        $applyRes = Invoke-ReleaseApply -RepoRoot $fix -NotesFile $notesFile -Title "Should Run Pester and Fail"
+        $applyRes.ExitCode | Should -Not -Be 0
+        $applyRes.Output | Should -Match 'Pester test suite failed'
+    }
+
+    It 'still validates Test-Template.ps1 in Apply mode even when Pester is skipped' {
+        $fix = New-ReleaseFixture -InitialVersion '1.0.0'
+        Set-Content -LiteralPath (Join-Path $fix 'feat.txt') -Value 'feat'
+        & git -C $fix add feat.txt
+        & git -C $fix commit -m "feat: corrupt version test" --quiet
+
+        # Run -Plan without -SkipChecks
+        $planRes = Invoke-ReleasePlan -RepoRoot $fix
+        $planRes.ExitCode | Should -Be 0
+
+        # Break VERSION so Test-Template.ps1 will fail, and update plan.json to match the new HEAD commit
+        Set-Content -LiteralPath (Join-Path $fix 'VERSION') -Value 'invalid-version-string'
+        & git -C $fix add VERSION
+        & git -C $fix commit -m "chore: corrupt version" --quiet
+
+        $newHead = (& git -C $fix rev-parse HEAD).Trim()
+        $planJsonPath = Join-Path $fix '.scratch/release/plan.json'
+        $planData = Get-Content -LiteralPath $planJsonPath -Raw -Encoding utf8 | ConvertFrom-Json
+        $planData.HeadSha = $newHead
+        $planData.ChecksValidated = $true
+        Set-Content -LiteralPath $planJsonPath -Value ($planData | ConvertTo-Json -Depth 5) -Encoding utf8
+
+        # Run -Apply WITHOUT -SkipChecks
+        $notesFile = Join-Path $fix '.scratch/release/notes.draft.md'
+        $applyRes = Invoke-ReleaseApply -RepoRoot $fix -NotesFile $notesFile -Title "Should Fail on Template"
+        $applyRes.ExitCode | Should -Not -Be 0
+        $applyRes.Output | Should -Match 'Test-Template.ps1 failed'
     }
 
     It 'fails when HEAD has changed since plan.json was generated' {

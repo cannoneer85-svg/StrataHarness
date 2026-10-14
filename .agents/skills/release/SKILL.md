@@ -70,12 +70,15 @@ pwsh -NoProfile -File .agents/skills/release/scripts/Invoke-Release.ps1 -Apply -
 ```
 
 The script:
-1. Re-verifies preconditions (P1–P3, P5) and checks that HEAD has not changed since the plan.
-2. Checks that local `main` is not behind `origin/main` (P6).
-3. Updates `VERSION`, prepends the new release section to `CHANGELOG.md`, and updates `template-version` in `.agents/SKILLS.md`.
-4. Creates a single release commit `chore(release): vX.Y.Z`.
-5. Creates an annotated tag `vX.Y.Z` with the release title.
-6. Pushes `main` and the tag atomically to `origin` (`git push --atomic origin main vX.Y.Z`).
+1. Re-verifies preconditions (P1–P2, P5) and checks that HEAD has not changed since the plan.
+2. Validates P3: if `.scratch/release/plan.json` exists for the exact current HEAD, full Pester test suite was already validated during `-Plan` and is skipped, running only fast `Test-Template.ps1`; otherwise runs full Pester test suite.
+3. Checks that local `main` is not behind `origin/main` (P6).
+4. Updates `VERSION`, prepends the new release section to `CHANGELOG.md`, and updates `template-version` in `.agents/SKILLS.md`.
+5. Creates a single release commit `chore(release): vX.Y.Z`.
+6. Creates an annotated tag `vX.Y.Z` with the release title.
+7. Pushes `main` and the tag atomically to `origin` (`git push --atomic origin main vX.Y.Z`).
+
+Both `-Plan` and `-Apply` stream structured progress messages (`[release] ...`) throughout execution to maintain complete transparency.
 
 #### Agent Report
 After `-Apply` completes, report the outcome to the user:

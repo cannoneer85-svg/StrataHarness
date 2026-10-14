@@ -4,9 +4,13 @@ description: Hand the current conversation off to a fresh background agent that 
 argument-hint: "What will the next session be used for?"
 ---
 
-Write a handoff summary of the current conversation so a fresh agent can continue the work. Instead of saving it, launch a background agent seeded with the summary as its prompt: `claude --bg --name "<descriptive name>" "<handoff summary>"`. It starts in the current working directory and returns immediately; the user manages it with `claude agents`.
+Write a handoff summary of the current conversation so a fresh agent can continue the work. Instead of saving it, launch a background agent seeded with the summary as its prompt. It starts in the current working directory and returns immediately; the user manages it with `claude agents`.
 
 Always pass `-n`/`--name` with a descriptive name (e.g. `--name "Fix login bug"`) — it sets the display name shown in the job list, session picker, and terminal title.
+
+To avoid shell interpolation vulnerabilities, save the summary to a temporary file (e.g. `tmp_summary=$(mktemp) ...`) and invoke as:
+`claude --bg --name "<descriptive-name>" -- "$(cat <summary-file>)"`
+(and remove the temp file afterwards).
 
 Include a "suggested skills" section in the summary, naming which skills the next agent should call the Skill tool for.
 

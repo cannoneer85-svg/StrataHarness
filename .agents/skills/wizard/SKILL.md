@@ -32,7 +32,7 @@ For each stage, write the precise path a human follows: which URL to open, what 
 
 ### 3. Author the wizard
 
-Copy `template.sh` to the target path. Replace the example stage with one `stage` per step, in dependency order. Use the library helpers — `stage`, `say`/`step`, `open_url`, `ask`/`ask_secret`, `write_env`, `set_secret`/`set_var`, `pause`/`confirm` — and set `TOTAL_STAGES` to the number of stages you wrote.
+Copy `template.sh` to the target path. Replace the example stage with one `stage` per step, in dependency order. Keep every stage inside `run_wizard` and the last line `run_wizard "$@"; exit` as is: bash then parses the whole file before the first prompt, so an edit mid-run can't break it. Use the library helpers — `stage`, `say`/`step`, `open_url`, `ask`/`ask_secret`, `write_env`, `set_secret`/`set_var`, `pause`/`confirm` — and set `TOTAL_STAGES` to the number of stages you wrote.
 
 Hold the bar the template sets: open the URL before asking for its value, use `ask_secret` for anything secret, `write_env` every persisted value, `set_secret` only the values CI actually needs, and `confirm` before any irreversible action. Each `stage` clears the screen so only the current step is visible — keep a stage to one focused task so nothing the human needs scrolls away. Don't touch the library above the marker.
 

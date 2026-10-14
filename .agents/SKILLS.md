@@ -13,7 +13,7 @@
 |---|---|---|---|---|
 | [grill-with-docs](skills/grill-with-docs/SKILL.md) | Интервью по плану задачи с фиксацией терминов в глоссарии и решений в ADR | ручной | matt+правки | active |
 | [grill-me](skills/grill-me/SKILL.md) | Жёсткое интервью, чтобы заострить план или дизайн, без записи документов | авто | matt | active |
-| [grilling](skills/grilling/SKILL.md) | Стресс-тест идеи или решения вопросами; формат вопросов для других интервью | авто | matt | active |
+| [grilling](skills/grilling/SKILL.md) | Стресс-тест идеи или решения вопросами; формат вопросов для других интервью | авто | matt+правки | active |
 | [wayfinder](skills/wayfinder/SKILL.md) | Планирование очень большой работы (больше одной сессии) как карты тикетов-решений | ручной | matt+правки | active |
 | [to-spec](skills/to-spec/SKILL.md) | Свести обсуждение в спецификацию без нового интервью | ручной | matt+правки | active |
 | [to-tickets](skills/to-tickets/SKILL.md) | Разбить спеку или план на тикеты-трассеры с зависимостями `Blocked by` | ручной | matt+правки | active |
@@ -21,7 +21,7 @@
 | [code-review](skills/code-review/SKILL.md) | Ревью изменений от фиксированной точки по осям Standards, Spec и опционально Adversary | авто | matt+правки | active |
 | [handoff](skills/handoff/SKILL.md) | Передать контекст новой сессии: документ в `docs/handoff/`, `LATEST.md`, очистка завершённого в `.scratch`; без коммита | ручной | matt+правки | active |
 | [close-task](skills/close-task/SKILL.md) | Закрыть задачу: предпроверка, шаги handoff и один conventional-коммит, без push | ручной | свой | active |
-| [claude-handoff](skills/claude-handoff/SKILL.md) | Передать разговор свежему фоновому агенту, который сразу продолжит работу | авто | matt | active |
+| [claude-handoff](skills/claude-handoff/SKILL.md) | Передать разговор свежему фоновому агенту, который сразу продолжит работу | авто | matt+правки | active |
 | [triage](skills/triage/SKILL.md) | Провести issues и внешние PR через роли триажа и подготовить брифы для агента | авто | matt+правки | active |
 | [to-questionnaire](skills/to-questionnaire/SKILL.md) | Превратить решение, на которое нет полного ответа, в опросник для другого человека | авто | matt | active |
 
@@ -37,8 +37,9 @@
 
 | Скилл | Когда использовать | Запуск | Источник | Статус |
 |---|---|---|---|---|
-| [tdd](skills/tdd/SKILL.md) | Разработка через тесты (red-green-refactor), интеграционные тесты | авто | matt | active |
-| [diagnosing-bugs](skills/diagnosing-bugs/SKILL.md) | Цикл диагностики сложных багов и регрессий производительности | авто | matt | active |
+| [tdd](skills/tdd/SKILL.md) | Разработка через тесты (red-green-refactor), интеграционные тесты | авто | matt+правки | active |
+| [diagnosing-bugs](skills/diagnosing-bugs/SKILL.md) | Цикл диагностики сложных багов и регрессий производительности | авто | matt+правки | active |
+| [retro](skills/retro/SKILL.md) | Ретроспектива сессии для улучшения окружения агента: тесты, линтеры, стандарты | ручной | matt+правки | active |
 | [minimal-diff](skills/minimal-diff/SKILL.md) | Дисциплина объема решения: лестница 7 ступеней до написания кода, запретные зоны и правила зависимостей | авто | свой | active |
 | [migrate-to-shoehorn](skills/migrate-to-shoehorn/SKILL.md) | Перевести тесты с утверждений типа `as` на `@total-typescript/shoehorn` | авто | matt | active |
 
@@ -63,7 +64,7 @@
 
 | Скилл | Когда использовать | Запуск | Источник | Статус |
 |---|---|---|---|---|
-| [teach](skills/teach/SKILL.md) | Научить пользователя новому навыку или понятию в этом рабочем пространстве | авто | matt | active |
+| [teach](skills/teach/SKILL.md) | Научить пользователя новому навыку или понятию в этом рабочем пространстве | авто | matt+правки | active |
 | [loop-me](skills/loop-me/SKILL.md) | Интервью о спецификации рабочих процессов, которые пользователь хочет построить | авто | matt | active |
 | [wait-what](skills/wait-what/SKILL.md) | Последний ответ непонятен — переформулировать его заново | авто | matt | active |
 | [scaffold-exercises](skills/scaffold-exercises/SKILL.md) | Создать структуру упражнений курса: разделы, задачи, решения, пояснения | авто | matt | active |
@@ -75,7 +76,8 @@
 | [resolving-merge-conflicts](skills/resolving-merge-conflicts/SKILL.md) | Разрешить незавершённый merge или rebase с конфликтами | авто | matt | active |
 | [git-guardrails-claude-code](skills/git-guardrails-claude-code/SKILL.md) | Хуки Claude Code, блокирующие опасные git-команды (push, reset --hard и др.) | авто | matt | active |
 | [setup-pre-commit](skills/setup-pre-commit/SKILL.md) | Настроить pre-commit хуки Husky: lint-staged, проверка типов, тесты | авто | matt | active |
-| [wizard](skills/wizard/SKILL.md) | Интерактивный bash-мастер для шагов, которые может сделать только человек | авто | matt | active |
+| [wizard](skills/wizard/SKILL.md) | Интерактивный bash-мастер для шагов, которые может сделать только человек | авто | matt+правки | active |
+| [pr](skills/pr/SKILL.md) | Справочник оформления описания PR по Show-Me, Before/After Evidence и Merge Danger | авто | matt+правки | active |
 
 ## Мета (Шаблон)
 

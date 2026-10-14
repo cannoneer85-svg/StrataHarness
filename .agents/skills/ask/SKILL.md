@@ -5,6 +5,8 @@ description: Ask which skill or flow fits your situation. A router over the skil
 
 # Ask
 
+Before stating what a skill does or recommending a step be skipped, read that skill's SKILL.md: the summaries here are for orientation only.
+
 When uncertain which route, stage, or helper skill fits the task, `/ask` guides the decision.
 
 Process rules, invariant stages, and interview rules and round themes live in the root [`AGENTS.md`](../../../AGENTS.md). Glossary terms are defined in [`.agents/CONTEXT.md`](../../CONTEXT.md). The full catalog of skills with categories and invocation modes lives in the [Skill Registry](../../SKILLS.md).
@@ -118,6 +120,11 @@ Helper skills support specific phases of work without defining the outer lifecyc
 - [`domain-modeling`](../domain-modeling/SKILL.md) — When resolving overloaded vocabulary, updating `CONTEXT.md`, or recording hard-to-reverse architectural decisions as ADRs.
 - [`tdd`](../tdd/SKILL.md) — When implementing discrete units of functionality test-first (red-green-refactor) at agreed seams.
 - [`improve-codebase-architecture`](../improve-codebase-architecture/SKILL.md) — When auditing a codebase for shallow modules and generating visual reports on deepening opportunities.
+
+### Quality, environment, and git
+
+- [`retro`](../retro/SKILL.md) — When completing a session, bug diagnosis, or review where recurring friction occurred. Runs a retrospective across 7 categories to turn mechanical friction into deterministic checks, linters, or test assertions.
+- [`pr`](../pr/SKILL.md) — When preparing a Pull Request description. Formats a high-signal summary following Show-Me visual demonstration, Before/After observable evidence, and Merge Danger analysis (never pushes).
 
 ### Human interaction, learning, and writing
 

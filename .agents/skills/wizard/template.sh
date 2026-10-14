@@ -14,9 +14,9 @@ set -euo pipefail
 
 if [[ -t 1 ]] && command -v tput >/dev/null 2>&1 && [[ "$(tput colors 2>/dev/null || echo 0)" -ge 8 ]]; then
   BOLD=$(tput bold); DIM=$(tput dim); RESET=$(tput sgr0)
-  BLUE=$(tput setaf 4); GREEN=$(tput setaf 2); YELLOW=$(tput setaf 3); RED=$(tput setaf 1)
+  BLUE=$(tput setaf 4); GREEN=$(tput setaf 2); YELLOW=$(tput setaf 3)
 else
-  BOLD=""; DIM=""; RESET=""; BLUE=""; GREEN=""; YELLOW=""; RED=""
+  BOLD=""; DIM=""; RESET=""; BLUE=""; GREEN=""; YELLOW=""
 fi
 
 # Author sets this at the top of the stages section.
@@ -32,7 +32,8 @@ SKIPPED=()        # things we couldn't do (e.g. gh missing)
 # output isn't a terminal, so piped logs stay readable.
 _clear() {
   [[ -t 1 ]] || return 0
-  if command -v tput >/dev/null 2>&1; then tput clear; else printf '\033[2J\033[3J\033[H'; fi
+  if command -v tput >/dev/null 2>&1 && tput clear 2>/dev/null; then return 0; fi
+  printf '\033[2J\033[3J\033[H'
 }
 
 # banner "Title" — opening frame: what this wizard does.
@@ -70,29 +71,36 @@ open_url() {
     elif command -v explorer.exe >/dev/null 2>&1; then explorer.exe "$url"
     elif command -v xdg-open    >/dev/null 2>&1; then xdg-open "$url"
     elif command -v open        >/dev/null 2>&1; then open "$url"
-    else warn "couldn't open a browser — visit it manually: $url"; fi
+    else false; fi
   } >/dev/null 2>&1 || warn "couldn't open a browser — visit it manually: $url"
 }
 
 # pause "msg" — wait for the human to confirm they've done the manual part.
 pause() {
   printf '  %s%s%s ' "$DIM" "${1:-Press Enter to continue}" "$RESET"
-  read -r _ || true
+  read -r _ || exit 130
 }
 
 # confirm "question" — y/N gate; returns success on yes.
 confirm() {
   local reply=""
   printf '  %s? %s [y/N] ' "$YELLOW" "$1"
-  read -r reply || true
+  read -r reply || exit 130
   [[ "$reply" =~ ^[Yy] ]]
 }
 
 # _existing KEY — current value of KEY in ENV_FILE, if any.
 _existing() {
   [[ -f "$ENV_FILE" ]] || return 1
-  local line; line=$(grep -E "^${1}=" "$ENV_FILE" | tail -n1) || return 1
-  printf '%s' "${line#*=}"
+  local line val
+  line=$(grep -E "^${1}=" "$ENV_FILE" | tail -n1) || return 1
+  val="${line#*=}"
+  if [[ "$val" =~ ^\'(.*)\'$ ]]; then
+    val="${BASH_REMATCH[1]}"
+  elif [[ "$val" =~ ^\"(.*)\"$ ]]; then
+    val="${BASH_REMATCH[1]}"
+  fi
+  printf '%s' "$val"
 }
 
 # ask KEY "Prompt" — read a value into $KEY. Offers the existing .env value as
@@ -105,7 +113,7 @@ ask() {
   else
     printf '  %s%s%s ' "$BOLD" "$prompt" "$RESET"
   fi
-  read -r input || true
+  read -e -r input || exit 130
   [[ -z "$input" && -n "$current" ]] && input="$current"
   printf -v "$key" '%s' "$input"
 }
@@ -119,21 +127,23 @@ ask_secret() {
   else
     printf '  %s%s%s ' "$BOLD" "$prompt" "$RESET"
   fi
-  read -rs input || true
+  read -rs input || exit 130
   printf '\n'
   [[ -z "$input" && -n "$current" ]] && input="$current"
   printf -v "$key" '%s' "$input"
 }
 
-# write_env KEY VALUE — upsert KEY=VALUE into ENV_FILE (creates it; replaces
-# any existing line). Idempotent.
+# write_env KEY VALUE — upsert KEY='VALUE' into ENV_FILE (creates it; replaces
+# any existing line) and sets $KEY. Idempotent.
 write_env() {
-  local key="$1" value="$2" tmp
+  local key="$1" value="$2" tmp escaped
   touch "$ENV_FILE"
   tmp=$(mktemp)
+  escaped="${value//\'/\'\\\'\'}"
   grep -vE "^${key}=" "$ENV_FILE" > "$tmp" || true
-  printf '%s=%s\n' "$key" "$value" >> "$tmp"
-  mv "$tmp" "$ENV_FILE"
+  printf "%s='%s'\n" "$key" "$escaped" >> "$tmp"
+  cat "$tmp" > "$ENV_FILE" && rm -f "$tmp"
+  printf -v "$key" '%s' "$value"
   WRITTEN_ENV+=("$key")
   printf '  %s✓ wrote%s %s → %s\n' "$GREEN" "$RESET" "$key" "$ENV_FILE"
 }
@@ -182,7 +192,11 @@ finish() {
 # ──────────────────────────────────────────────────────────────────────────
 # STAGES — author this section. One stage() per step the human takes.
 # Replace the example below. Set TOTAL_STAGES to match the stages you write.
+# Keep every stage inside run_wizard and the last line as is: bash then parses
+# the whole file before the first prompt, so an edit mid-run can't break it.
 # ──────────────────────────────────────────────────────────────────────────
+
+run_wizard() {
 
 TOTAL_STAGES=1
 
@@ -202,3 +216,6 @@ set_secret STRIPE_SECRET_KEY "$STRIPE_SECRET_KEY"   # CI needs this one
 # ──────────────────────────────────────────────────────────────────────────
 
 finish
+}
+
+run_wizard "$@"; exit

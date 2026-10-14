@@ -98,6 +98,7 @@ Fix every hard violation, spec gap, and critical Adversary finding, and each jud
 1. **Full task close** (`/close-task`, or commands like «закрывай задачу», «фиксируй», «мерджим»): runs preflight checks, generates the handoff document and updates `LATEST.md`, cleans finished scratch files and removes `.scratch/<feature>/` when complete, and creates a single conventional local git commit (never pushes).
 2. **Context transfer without commit** (`/handoff`, or «делай handoff»): summarizes conversation state into `docs/handoff/` and `LATEST.md` for a fresh session, preserves open tickets and `BASE_COMMIT`, cleans only finished tickets/temp files, and leaves all code uncommitted.
 3. **Further adjustments**: request any additional edits, refactoring, or tests before closing.
+4. **Environment retrospective** (`/retro`): if recurring friction, tooling issues, or preventable review mistakes were encountered, run a retrospective to capture actionable environment improvements (automated checks, linters, or standards).
 
 Then stop and wait. `/handoff`, `/close-task` and any commit run only on the user's explicit command.
 

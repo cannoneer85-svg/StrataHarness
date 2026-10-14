@@ -58,6 +58,9 @@ Default recommendation:
 If the `triage` skill is present in `.agents/skills/`:
 - Ask if the user wants the five canonical triage roles (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`).
 - Copy `templates/triage-labels.md` to `docs/agents/triage-labels.md`, customizing labels if the user provides custom mapping.
+- When configuring GitHub or GitLab, create any missing labels using:
+  - GitHub: `gh label create <name> --color <color> --description "<desc>"`
+  - GitLab: `glab label create <name> --color <color> --description "<desc>"`
 
 If `triage` is not installed, omit `docs/agents/triage-labels.md`.
 

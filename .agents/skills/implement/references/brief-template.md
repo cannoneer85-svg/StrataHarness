@@ -20,7 +20,7 @@ You are an implementer subagent, not the user-facing agent. The process rules in
 
 ## Seams and tests
 
-<The seams agreed in the spec, and for each: what is tested, the framework, the exact test command. Plus validators every ticket must pass, e.g. lint, typecheck, a template check script.>
+<The seams agreed in the spec, and for each: what is tested, the framework, the exact test command. Distinguish fast targeted tests and validators (< 5s, e.g. Test-Template.ps1, linter, unit test for the touched file) to run per edit from heavy integration suites (> 1m, e.g. full Pester or e2e) reserved for the Orchestrator at completion.>
 
 ## Rules
 

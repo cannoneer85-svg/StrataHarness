@@ -17,6 +17,7 @@
          no version sections. Without VERSION (a Project) the rule is skipped.
       8. Active agent instructions (.agents/skills/*, .agents/CONTEXT.md, AGENTS.md) contain no legacy numeric question quota phrasing.
       9. The 'release' skill (if present) is listed in the '## Только Шаблон' section of .agents/SKILLS.md.
+      10. All .sh files in .agents/ use Unix LF line endings and pass bash syntax check.
 
     The repository root is resolved relative to this script, so it can be run from any folder.
     Prints every violation and exits with 0 (no violations) or 1 (violations found).
@@ -248,6 +249,38 @@ if ($skillFolders -contains 'release') {
             }
         } else {
             Add-Violation 'release-registry' "The 'release' skill exists, but the '## Только Шаблон' section is missing in .agents/SKILLS.md."
+        }
+    }
+}
+
+# --- Rule 10: bash script line endings and syntax --------------------------------------
+
+if (Test-Path -LiteralPath $AgentsDir -PathType Container) {
+    $shFiles = @(Get-ChildItem -LiteralPath $AgentsDir -File -Recurse -Filter '*.sh')
+    $bashPath = $null
+    if ($IsWindows -and -not [string]::IsNullOrEmpty($env:ProgramFiles)) {
+        $gitBash = Join-Path $env:ProgramFiles 'Git' 'bin' 'bash.exe'
+        if (Test-Path -LiteralPath $gitBash) {
+            $bashPath = $gitBash
+        }
+    }
+    if ($null -eq $bashPath) {
+        $candidate = Get-Command 'bash' -ErrorAction SilentlyContinue
+        if ($null -ne $candidate -and (-not $IsWindows -or $candidate.Source -notmatch '(?i)system32\\bash\.exe$')) {
+            $bashPath = $candidate.Source
+        }
+    }
+
+    foreach ($sh in $shFiles) {
+        $bytes = [System.IO.File]::ReadAllBytes($sh.FullName)
+        if ($bytes -contains 13) {
+            Add-Violation 'bash-lf' "File '$(Get-RelativePath $sh.FullName)' contains CRLF line endings; bash scripts must use Unix LF."
+        }
+        if ($null -ne $bashPath) {
+            $syntaxOutput = & $bashPath -n $sh.FullName 2>&1
+            if ($LASTEXITCODE -ne 0) {
+                Add-Violation 'bash-syntax' "File '$(Get-RelativePath $sh.FullName)' failed bash syntax check: $syntaxOutput"
+            }
         }
     }
 }

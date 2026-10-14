@@ -61,4 +61,5 @@ Report to the user, in the user's language:
 - the commit hash and subject, and the number of files committed;
 - the handoff document's path and the files removed from `.scratch/`;
 - on a partial close: the open tickets left and the out-of-scope files left uncommitted;
-- that publishing is theirs: `git push` when they are ready.
+- that publishing is theirs: `git push` when they are ready;
+- optional next step: if recurring friction, tooling failures, or preventable review findings occurred during the task, offer to run `/retro` to capture actionable agent environment improvements (automated checks, linters, or standards).

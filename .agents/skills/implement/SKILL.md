@@ -12,6 +12,8 @@ Implement the work described in the spec or in the tickets under `.scratch/<feat
 
 Before the first edit, write the output of `git rev-parse HEAD` to `.scratch/<feature>/BASE_COMMIT`. `/code-review` uses it as its fixed point. When resuming work and the file already exists, keep it.
 
+If the user passes a ticket reference, fetch it from the issue tracker and state its title before starting. If the reference is ambiguous, ask.
+
 ## 2. Choose the execution strategy
 
 Read the tickets and their **Blocked by** edges, and forecast the token footprint against the Smart zone (≈120k). Announce the strategy with a one-line reason before writing code.

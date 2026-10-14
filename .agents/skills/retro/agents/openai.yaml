@@ -1,0 +1,5 @@
+interface:
+  display_name: "Retro"
+  short_description: "Retrospective on an agent session to improve environment"
+policy:
+  allow_implicit_invocation: false

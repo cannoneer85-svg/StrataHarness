@@ -8,6 +8,14 @@ Each release section is titled `## [X.Y.Z] - YYYY-MM-DD - <release title>` and m
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-10-14 - Optimize release apply mode with conditional test caching and progress logging
+
+### Changed
+- Skip redundant full Pester test suite in `Invoke-Release.ps1 -Apply` when release plan was validated on the exact same commit, reducing apply duration from 6.5 minutes to ~2 seconds while preserving structural template validation.
+- Guard test-skip trust boundary by recording checks validation state in `plan.json`, ensuring Pester is never skipped if `-Plan` bypassed checks.
+- Add structured console progress logging (`[release] ...`) across all release modes (`-Plan`, `-Apply`, `-PushOnly`, `-Undo`) to eliminate perceived freezes.
+- Configure Pester execution with `Run.Exit = $true` to ensure proper non-zero exit codes on failures without leaving stray NUnit XML artifacts.
+
 ## [1.2.0] - 2026-10-14 - Upstream skills backport, retro & pr skills, and bash validation
 
 ### Added

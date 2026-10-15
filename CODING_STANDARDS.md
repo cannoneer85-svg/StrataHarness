@@ -15,6 +15,7 @@ This document defines the architectural, authoring, and engineering judgement st
 
 - **Update Mode Contract:** Changes to `.agents/skills/init-project/`, `.agents/SKILLS.md` format, or payload structure must preserve compatibility with `Initialize-Project.ps1 -Mode Update` for existing Projects, or explicitly flag a MAJOR version transition.
 - **Cross-Platform Execution:** Scripts under `.agents/` must run cleanly on PowerShell 7+ across Windows, Linux, and macOS. Use `Join-Path` and `-LiteralPath` for filesystem operations, and keep all `.sh` files in Unix LF format.
+- **Regex Group Isolation:** When parsing text with `-match`, always capture named groups into local variables (`$key = $Matches['key']`) immediately before executing any subsequent string or regex operations, as subsequent `-match` operations overwrite the automatic `$Matches` variable.
 
 ## 3. Two-Tier Testing & Fixture Isolation
 

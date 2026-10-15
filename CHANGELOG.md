@@ -8,6 +8,11 @@ Each release section is titled `## [X.Y.Z] - YYYY-MM-DD - <release title>` and m
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-10-15 - Sequential report-then-question stop-gate rule
+
+### Changed
+- **Stop-gate report sequence and cross-harness phrasing:** Replace simultaneous "same-turn / alongside" wording with a strict two-step sequence across `AGENTS.md` and stage skills (`analyze`, `grill-with-docs`, `implement`, `code-review`, `release`): agents must first write out the complete stage report from start to finish in the message body, and only after finishing the report text invoke the harness's interactive question tool (removing hardcoded vendor-specific tool names).
+
 ## [1.4.0] - 2026-10-15 - Harness P1/P2 improvements and stop-gate text precedence
 
 ### Added

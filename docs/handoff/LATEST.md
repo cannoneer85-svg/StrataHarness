@@ -1,5 +1,5 @@
-<!-- Copied from docs/handoff/2026-10-15-codex-budget-hint.md -->
-# Передача контекста: Уточнение лимита контекстного бюджета OpenAI Codex в валидаторе и документации
+<!-- Copied from docs/handoff/2026-10-15-tickets-map-colors.md -->
+# Передача контекста: Обязательная цветовая градация и легенда Mermaid-карты тикетов в `to-tickets`
 
 - **Дата:** 2026-10-15
 - **Ветка:** `main`
@@ -11,18 +11,16 @@
 ## Состояние
 
 ### Цель
-Сделать диагностическое сообщение валидатора [`Test-Template.ps1`](file:///d:/YandexDisk/MyProjects/AI/strataharness/.agents/scripts/Test-Template.ps1) и руководство по механике скиллов [`SKILL-MECHANICS.md`](file:///d:/YandexDisk/MyProjects/AI/strataharness/.agents/skills/writing-for-agents/SKILL-MECHANICS.md) прозрачными для разработчиков и агентов, явно указав платформенное происхождение суммарного лимита описаний скиллов (8 000 символов) — требование совместимости с рантаймом OpenAI Codex и предотвращение отсечения избыточных скиллов.
+Исключить пропуск чтения шаблона [`tickets-map-template.md`](../../.agents/skills/to-tickets/references/tickets-map-template.md) агентом на этапе создания тикетов (`/to-tickets`), из-за которого в превью (шаг 4) и итоговом отчёте (шаги 5 и 7) мог генерироваться неокрашенный граф `flowchart TD` без классов статусов (`classDef` / `class`), коротких меток узлов и строки легенды.
 
 ### Что сделано
-1. В [`.agents/scripts/Test-Template.ps1`](file:///d:/YandexDisk/MyProjects/AI/strataharness/.agents/scripts/Test-Template.ps1#L179-L181) обновлен текст нарушения правила `description-length`:
-   - В само сообщение об ошибке добавлено: `maximum budget for OpenAI Codex compatibility is 8000 characters (excess skills may be omitted by runtime)`.
-   - В подсказку `Fix:` добавлено пояснение: `(Codex progressive disclosure limit)`.
-2. В [`tests/Test-Template.Tests.ps1`](file:///d:/YandexDisk/MyProjects/AI/strataharness/tests/Test-Template.Tests.ps1#L205-L210) актуализирован юнит-тест проверки текста ошибки валидатора.
-3. В [`.agents/skills/writing-for-agents/SKILL-MECHANICS.md`](file:///d:/YandexDisk/MyProjects/AI/strataharness/.agents/skills/writing-for-agents/SKILL-MECHANICS.md#L16-L23) добавлен подраздел `### Description limits and context budget` с явным разделением двух границ:
-   - Лимит на отдельный `SKILL.md` (1 024 символа по спецификации Agent Skills).
-   - Суммарный лимит на каталог описаний (8 000 символов по рантайм-бюджету прогрессивного раскрытия OpenAI Codex).
-4. Зеркало [`.claude/skills/writing-for-agents/SKILL-MECHANICS.md`](file:///d:/YandexDisk/MyProjects/AI/strataharness/.claude/skills/writing-for-agents/SKILL-MECHANICS.md) синхронизировано через [`.agents/scripts/Sync-ClaudeSkills.ps1`](file:///d:/YandexDisk/MyProjects/AI/strataharness/.agents/scripts/Sync-ClaudeSkills.ps1).
-5. Пройден полный цикл проверок: TDD Red/Green, предпроверочные тесты (35 тестов green), код-ревью субагентами Standards и Spec (0 нарушений).
+1. В [`.agents/skills/to-tickets/SKILL.md`](../../.agents/skills/to-tickets/SKILL.md#L50-L55) (шаг 4 `Quiz the user`) косвенная отсылка `(see step 5)` заменена на прямое требование прочитать [`references/tickets-map-template.md`](../../.agents/skills/to-tickets/references/tickets-map-template.md) перед отрисовкой диаграммы и включить три обязательных элемента:
+   - **Nodes:** короткие метки `T<NN>["<NN> <short title>"]` (до 4 слов).
+   - **Colour classes:** все четыре фиксированных `classDef` (`ready`, `inprogress`, `done`, `blocked`) и привязка `class` к каждому узлу (`ready` для стартового фронтира без блокеров, `blocked` для зависимых тикетов).
+   - **Legend:** строка `**Легенда:** ...` непосредственно под блоком Mermaid.
+2. В шагах 5 и 7 [`.agents/skills/to-tickets/SKILL.md`](../../.agents/skills/to-tickets/SKILL.md#L72-L130) явно закреплено требование включать все четыре `classDef`, привязку `class` и строку легенды как при сохранении карты тикетов (`TICKETS.md`), так и при выводе пользователю на стоп-гейте этапа.
+3. Синхронизировано зеркало `.claude/skills/to-tickets/SKILL.md` через [`.agents/scripts/Sync-ClaudeSkills.ps1`](../../.agents/scripts/Sync-ClaudeSkills.ps1).
+4. Пройдены валидатор Шаблона (`Test-Template.ps1` — 0 нарушений), полный набор Pester-тестов (`tests/` — 216 passed, 0 failed) и параллельное ревью `/code-review` по осям Standards и Spec (`0 hard violations`).
 
 ---
 
@@ -32,11 +30,11 @@
 ---
 
 ## Следующий шаг
-Репозиторий находится в стабильном консистентном состоянии с проходящими тестами. Готов к выполнению следующих продуктовых задач или формированию релиза (`/release -Plan`).
+Репозиторий находится в чистом и консистентном состоянии. Можно переходить к следующим задачам или подготовке релиза (`/release -Plan`).
 
 ---
 
 ## Рекомендуемые скиллы
-- [`ask`](file:///d:/YandexDisk/MyProjects/AI/strataharness/.agents/skills/ask/SKILL.md) — выбор подходящего маршрута и скилла для новой задачи.
-- [`code-review`](file:///d:/YandexDisk/MyProjects/AI/strataharness/.agents/skills/code-review/SKILL.md) — статический анализ изменений по осям Standards, Spec и Adversary.
-- [`release`](file:///d:/YandexDisk/MyProjects/AI/strataharness/.agents/skills/release/SKILL.md) — выпуск новой версии Шаблона.
+- [`ask`](../../.agents/skills/ask/SKILL.md) — выбор подходящего маршрута и скилла для новой задачи.
+- [`to-tickets`](../../.agents/skills/to-tickets/SKILL.md) — декомпозиция спецификации на вертикальные тикеты с окрашенной Mermaid-картой зависимостей.
+- [`release`](../../.agents/skills/release/SKILL.md) — выпуск новой версии Шаблона.

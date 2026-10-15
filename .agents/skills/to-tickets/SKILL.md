@@ -47,7 +47,11 @@ Present the proposed breakdown as a numbered list. For each ticket, show:
 - **Blocked by**: which other tickets (if any) must complete first
 - **What it delivers**: the end-to-end behaviour this ticket makes work
 
-Below the list, draw the tickets map's mermaid diagram (see step 5) so the user sees the blocking edges as a graph.
+Below the list, read [references/tickets-map-template.md](references/tickets-map-template.md) and draw the tickets map's Mermaid diagram and legend so the user sees the blocking edges and initial frontier:
+
+- **Nodes**: `T<NN>["<NN> <short title>"]` (at most four words).
+- **Colour classes**: include all four fixed `classDef` lines (`ready`, `inprogress`, `done`, `blocked`) from the template and assign each node its initial `class` — tickets with no blockers in `ready` (blue frontier), tickets with any blocker in `blocked` (grey).
+- **Legend**: include the legend line (`**Легенда:** ...`) immediately below the Mermaid block.
 
 Ask the user:
 
@@ -68,7 +72,7 @@ Work the **frontier**: any ticket whose blockers are all done. For a purely line
 
 Every ticket starts at `ready-for-agent` and moves `ready-for-agent → in-progress → done`; the ticket's **Status** is the source of truth. Blocked is drawn, not stored: a `ready-for-agent` ticket with an unfinished blocker shows as blocked on the tickets map.
 
-Then build the **tickets map** from [references/tickets-map-template.md](references/tickets-map-template.md): a mermaid dependency graph coloured by status, a legend, and a table of every ticket. Always build it, for any tracker:
+Then build the **tickets map** from [references/tickets-map-template.md](references/tickets-map-template.md): a Mermaid dependency graph coloured by status (all four `classDef` lines and `class` assignments), the legend line immediately below it, and a table of every ticket. Always build it, for any tracker:
 
 - **Local files** → write it to `.scratch/<feature>/TICKETS.md`, beside the `issues/` folder. It is an index; each ticket stays in its own file.
 - **A real issue tracker** → post it as a comment on the parent issue, or in your message to the user when there is no parent.
@@ -126,4 +130,4 @@ Any uncovered requirement is a blocker: add or adjust tickets to cover it before
 
 ### 7. Show the tickets map
 
-Show the user the published tickets map — the diagram, the table, the Rulings & Decisions section, the coverage matrix, and where they live — then stop at the tickets stop gate. Done when every published ticket appears in the map with its Status and all spec requirements are covered.
+Show the user the published tickets map — the colour-coded Mermaid diagram (with all four `classDef` lines and `class` assignments), the legend line right below it, the table, the Rulings & Decisions section, the coverage matrix, and where they live — then stop at the tickets stop gate. Done when every published ticket appears in the map with its Status, its node colour class (`ready` or `blocked`), the legend, and all spec requirements are covered.

@@ -117,3 +117,34 @@ Describe 'Test-Template.ps1 legacy quota checks' -Tag 'Unit' {
     }
 }
 
+Describe 'Test-Template.ps1 Claude mirror sync checks' -Tag 'Unit' {
+    It 'passes when .claude/skills is in sync with .agents/skills' {
+        $root = New-FixtureRepo
+        $srcSkill = Join-Path $root '.agents' 'skills' 'demo'
+        $dstSkill = Join-Path $root '.claude' 'skills' 'demo'
+        New-Item -ItemType Directory -Path $srcSkill -Force | Out-Null
+        New-Item -ItemType Directory -Path $dstSkill -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $srcSkill 'SKILL.md') -Value "---`nname: demo`n---`n# Demo`n" -NoNewline
+        Set-Content -LiteralPath (Join-Path $dstSkill 'SKILL.md') -Value "---`nname: demo`n---`n# Demo`n" -NoNewline
+        Set-Content -LiteralPath (Join-Path $root '.agents' 'SKILLS.md') -Value "# Registry`n`n| [demo](skills/demo/SKILL.md) | Demo | авто | свой | active |`n"
+
+        $result = Invoke-TestTemplate $root
+        $result.ExitCode | Should -Be 0
+    }
+
+    It 'fails when a file in .claude/skills is out of sync or missing' {
+        $root = New-FixtureRepo
+        $srcSkill = Join-Path $root '.agents' 'skills' 'demo'
+        $dstSkill = Join-Path $root '.claude' 'skills' 'demo'
+        New-Item -ItemType Directory -Path $srcSkill -Force | Out-Null
+        New-Item -ItemType Directory -Path $dstSkill -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $srcSkill 'SKILL.md') -Value "---`nname: demo`n---`n# Updated`n" -NoNewline
+        Set-Content -LiteralPath (Join-Path $dstSkill 'SKILL.md') -Value "---`nname: demo`n---`n# Old`n" -NoNewline
+        Set-Content -LiteralPath (Join-Path $root '.agents' 'SKILLS.md') -Value "# Registry`n`n| [demo](skills/demo/SKILL.md) | Demo | авто | свой | active |`n"
+
+        $result = Invoke-TestTemplate $root
+        $result.ExitCode | Should -Be 1
+        $result.Output | Should -Match '\[claude-mirror\]'
+    }
+}
+

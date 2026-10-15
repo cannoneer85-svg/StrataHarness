@@ -7,9 +7,26 @@
 BeforeAll {
     $script:TemplateRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
     $script:InitScript = Join-Path $script:TemplateRoot '.agents' 'skills' 'init-project' 'scripts' 'Initialize-Project.ps1'
+    $script:GoldenCacheRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("strataharness-init-golden-" + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path $script:GoldenCacheRoot -Force | Out-Null
 
-    function New-FixtureRepo {
-        $root = (Join-Path $TestDrive ([guid]::NewGuid().ToString('N')))
+    function Initialize-GitRepoFixture {
+        param(
+            [string]$Path,
+            [string]$UserName = 'Tester',
+            [string]$UserEmail = 'tester@example.com'
+        )
+        & git -C $Path init --quiet
+        & git -C $Path config user.name $UserName
+        & git -C $Path config user.email $UserEmail
+        & git -C $Path config commit.gpgsign false
+        & git -C $Path config core.autocrlf false
+        & git -C $Path config advice.crlf false
+        & git -C $Path config core.safecrlf false
+    }
+
+    function Build-GoldenNewFixture {
+        $root = Join-Path $script:GoldenCacheRoot 'new-fixture'
         New-Item -ItemType Directory -Path $root -Force | Out-Null
         $resolvedRoot = (Resolve-Path -LiteralPath $root).Path
 
@@ -62,41 +79,8 @@ BeforeAll {
         return $resolvedRoot
     }
 
-    function New-TargetRepo {
-        $root = (Join-Path $TestDrive ([guid]::NewGuid().ToString('N')))
-        New-Item -ItemType Directory -Path $root -Force | Out-Null
-        $resolvedRoot = (Resolve-Path -LiteralPath $root).Path
-
-        # Seed target repo with its own existing files
-        Set-Content -LiteralPath (Join-Path $resolvedRoot 'README.md') -Value "# Existing Target Project`n`nCustom project readme." -Encoding utf8
-        Set-Content -LiteralPath (Join-Path $resolvedRoot 'AGENTS.md') -Value "# Custom Target AGENTS`n`nKeep custom agent rules." -Encoding utf8
-
-        $docsDir = Join-Path $resolvedRoot 'docs'
-        New-Item -ItemType Directory -Path $docsDir -Force | Out-Null
-        Set-Content -LiteralPath (Join-Path $docsDir 'existing.md') -Value "# Existing doc in target." -Encoding utf8
-
-        # .gitignore with pre-existing entries
-        Set-Content -LiteralPath (Join-Path $resolvedRoot '.gitignore') -Value "node_modules/`n*.log`n" -Encoding utf8
-
-        return $resolvedRoot
-    }
-
-    function Initialize-GitRepoFixture {
-        param(
-            [string]$Path,
-            [string]$UserName = 'Tester',
-            [string]$UserEmail = 'tester@example.com'
-        )
-        & git -C $Path init --quiet
-        & git -C $Path config user.name $UserName
-        & git -C $Path config user.email $UserEmail
-        & git -C $Path config commit.gpgsign false
-        & git -C $Path config core.autocrlf false
-        & git -C $Path config advice.crlf false
-    }
-
-    function New-UpdateFixture {
-        $tmpDir = (Join-Path $TestDrive ([guid]::NewGuid().ToString('N')))
+    function Build-GoldenUpdateFixture {
+        $tmpDir = Join-Path $script:GoldenCacheRoot 'update-fixture'
         New-Item -ItemType Directory -Path $tmpDir -Force | Out-Null
         $templateDir = Join-Path $tmpDir 'template'
         $projectDir = Join-Path $tmpDir 'project'
@@ -184,7 +168,7 @@ Initial content
 "@ -Encoding utf8
 
         # Commit Template v1
-        & git -C $templateResolved add .
+        & git -C $templateResolved add . 2>$null
         & git -C $templateResolved commit -m "Template v1" --quiet
         $v1Sha = (& git -C $templateResolved rev-parse --short HEAD).Trim()
 
@@ -256,7 +240,7 @@ All notable changes documented here.
 "@ -Encoding utf8
 
         # Commit Template v2
-        & git -C $templateResolved add .
+        & git -C $templateResolved add . 2>$null
         & git -C $templateResolved commit -m "Template v2" --quiet
         $v2Sha = (& git -C $templateResolved rev-parse --short HEAD).Trim()
 
@@ -277,6 +261,66 @@ Locally modified by project team.
             V1Sha        = $v1Sha
             V2Sha        = $v2Sha
         }
+    }
+
+    $script:GoldenNewFixture = Build-GoldenNewFixture
+    $script:GoldenUpdateFixture = Build-GoldenUpdateFixture
+
+    function New-FixtureRepo {
+        $dest = Join-Path $TestDrive ([guid]::NewGuid().ToString('N'))
+        Copy-Item -LiteralPath $script:GoldenNewFixture -Destination $dest -Recurse -Force
+        return (Resolve-Path -LiteralPath $dest).Path
+    }
+
+    function New-TargetRepo {
+        $root = (Join-Path $TestDrive ([guid]::NewGuid().ToString('N')))
+        New-Item -ItemType Directory -Path $root -Force | Out-Null
+        $resolvedRoot = (Resolve-Path -LiteralPath $root).Path
+
+        # Seed target repo with its own existing files
+        Set-Content -LiteralPath (Join-Path $resolvedRoot 'README.md') -Value "# Existing Target Project`n`nCustom project readme." -Encoding utf8
+        Set-Content -LiteralPath (Join-Path $resolvedRoot 'AGENTS.md') -Value "# Custom Target AGENTS`n`nKeep custom agent rules." -Encoding utf8
+
+        $docsDir = Join-Path $resolvedRoot 'docs'
+        New-Item -ItemType Directory -Path $docsDir -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $docsDir 'existing.md') -Value "# Existing doc in target." -Encoding utf8
+
+        # .gitignore with pre-existing entries
+        Set-Content -LiteralPath (Join-Path $resolvedRoot '.gitignore') -Value "node_modules/`n*.log`n" -Encoding utf8
+
+        return $resolvedRoot
+    }
+
+    function New-UpdateFixture {
+        $tmpDir = (Join-Path $TestDrive ([guid]::NewGuid().ToString('N')))
+        New-Item -ItemType Directory -Path $tmpDir -Force | Out-Null
+        $templateDir = Join-Path $tmpDir 'template'
+        $projectDir = Join-Path $tmpDir 'project'
+
+        Copy-Item -LiteralPath $script:GoldenUpdateFixture.TemplateRoot -Destination $templateDir -Recurse -Force
+        Copy-Item -LiteralPath $script:GoldenUpdateFixture.ProjectRoot -Destination $projectDir -Recurse -Force
+
+        $templateResolved = (Resolve-Path -LiteralPath $templateDir).Path
+        $projectResolved = (Resolve-Path -LiteralPath $projectDir).Path
+
+        # Point project's template-source metadata to the cloned template repo
+        $projSkillsMd = Join-Path $projectResolved '.agents' 'SKILLS.md'
+        $projSkillsText = Get-Content -LiteralPath $projSkillsMd -Raw -Encoding utf8
+        $projSkillsText = $projSkillsText.Replace($script:GoldenUpdateFixture.TemplateRoot, $templateResolved)
+        Set-Content -LiteralPath $projSkillsMd -Value $projSkillsText -Encoding utf8 -NoNewline
+
+        return @{
+            TemplateRoot = $templateResolved
+            ProjectRoot  = $projectResolved
+            V1Sha        = $script:GoldenUpdateFixture.V1Sha
+            V2Sha        = $script:GoldenUpdateFixture.V2Sha
+        }
+    }
+}
+
+AfterAll {
+    if ($script:GoldenCacheRoot -and (Test-Path -LiteralPath $script:GoldenCacheRoot)) {
+        Remove-Item -LiteralPath $script:GoldenCacheRoot -Recurse -Force -ErrorAction SilentlyContinue
     }
 }
 
@@ -454,9 +498,9 @@ Describe 'Initialize-Project.ps1 -Mode Adopt' -Tag 'Integration' {
         $agentsAfter = [System.IO.File]::ReadAllBytes((Join-Path $target 'AGENTS.md'))
         $docAfter = [System.IO.File]::ReadAllBytes((Join-Path $target 'docs/existing.md'))
 
-        $readmeAfter | Should -Be $readmeBefore
-        $agentsAfter | Should -Be $agentsBefore
-        $docAfter | Should -Be $docBefore
+        [System.Linq.Enumerable]::SequenceEqual($readmeAfter, $readmeBefore) | Should -BeTrue
+        [System.Linq.Enumerable]::SequenceEqual($agentsAfter, $agentsBefore) | Should -BeTrue
+        [System.Linq.Enumerable]::SequenceEqual($docAfter, $docBefore) | Should -BeTrue
     }
 
     It 'lists conflicts when destination files already exist' {
@@ -567,7 +611,7 @@ Describe 'Initialize-Project.ps1 -Mode Adopt' -Tag 'Integration' {
         $filesAfter.Count | Should -Be $filesBefore.Count
         foreach ($rel in $filesBefore.Keys) {
             $filesAfter.ContainsKey($rel) | Should -BeTrue
-            $filesAfter[$rel] | Should -Be $filesBefore[$rel]
+            [System.Linq.Enumerable]::SequenceEqual($filesAfter[$rel], $filesBefore[$rel]) | Should -BeTrue
         }
     }
 
@@ -663,7 +707,7 @@ Describe 'Initialize-Project.ps1 tracker reconfiguration' -Tag 'Integration' {
         # Verify ALL other files in the repo are completely untouched
         foreach ($rel in $otherFilesBefore.Keys) {
             $currentBytes = [System.IO.File]::ReadAllBytes((Join-Path $root $rel))
-            $currentBytes | Should -Be $otherFilesBefore[$rel]
+            [System.Linq.Enumerable]::SequenceEqual($currentBytes, $otherFilesBefore[$rel]) | Should -BeTrue
         }
 
         # Switch tracker to gitlab
@@ -678,7 +722,7 @@ Describe 'Initialize-Project.ps1 tracker reconfiguration' -Tag 'Integration' {
 
         foreach ($rel in $otherFilesBefore.Keys) {
             $currentBytes = [System.IO.File]::ReadAllBytes((Join-Path $root $rel))
-            $currentBytes | Should -Be $otherFilesBefore[$rel]
+            [System.Linq.Enumerable]::SequenceEqual($currentBytes, $otherFilesBefore[$rel]) | Should -BeTrue
         }
     }
 }
@@ -720,7 +764,7 @@ Describe 'Initialize-Project.ps1 -Mode Update' -Tag 'Integration' {
         $filesAfter.Count | Should -Be $filesBefore.Count
         foreach ($rel in $filesBefore.Keys) {
             $filesAfter.ContainsKey($rel) | Should -BeTrue
-            $filesAfter[$rel] | Should -Be $filesBefore[$rel]
+            [System.Linq.Enumerable]::SequenceEqual($filesAfter[$rel], $filesBefore[$rel]) | Should -BeTrue
         }
     }
 

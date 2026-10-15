@@ -18,6 +18,7 @@
       8. Active agent instructions (.agents/skills/*, .agents/CONTEXT.md, AGENTS.md) contain no legacy numeric question quota phrasing.
       9. The 'release' skill (if present) is listed in the '## Только Шаблон' section of .agents/SKILLS.md.
       10. All .sh files in .agents/ use Unix LF line endings and pass bash syntax check.
+      11. If .claude/skills/ exists, its file tree and file contents match .agents/skills/.
 
     The repository root is resolved relative to this script, so it can be run from any folder.
     Prints every violation and exits with 0 (no violations) or 1 (violations found).
@@ -281,6 +282,41 @@ if (Test-Path -LiteralPath $AgentsDir -PathType Container) {
             if ($LASTEXITCODE -ne 0) {
                 Add-Violation 'bash-syntax' "File '$(Get-RelativePath $sh.FullName)' failed bash syntax check: $syntaxOutput"
             }
+        }
+    }
+}
+
+# --- Rule 11: .claude/skills mirror sync -----------------------------------------------
+
+$ClaudeSkillsDir = Join-Path $RepoRoot '.claude' 'skills'
+if ((Test-Path -LiteralPath $ClaudeSkillsDir -PathType Container) -and (Test-Path -LiteralPath $SkillsDir -PathType Container)) {
+    $srcSet = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    Get-ChildItem -LiteralPath $SkillsDir -File -Recurse -Force | ForEach-Object {
+        [void]$srcSet.Add([System.IO.Path]::GetRelativePath($SkillsDir, $_.FullName).Replace('\', '/'))
+    }
+
+    $dstSet = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    Get-ChildItem -LiteralPath $ClaudeSkillsDir -File -Recurse -Force | ForEach-Object {
+        [void]$dstSet.Add([System.IO.Path]::GetRelativePath($ClaudeSkillsDir, $_.FullName).Replace('\', '/'))
+    }
+
+    foreach ($rel in ($srcSet | Sort-Object)) {
+        if (-not $dstSet.Contains($rel)) {
+            Add-Violation 'claude-mirror' "Missing in .claude/skills/: '$rel'. Run .agents/scripts/Sync-ClaudeSkills.ps1."
+            continue
+        }
+        $srcFile = Join-Path $SkillsDir $rel
+        $dstFile = Join-Path $ClaudeSkillsDir $rel
+        $same = ((Get-Item -LiteralPath $srcFile).Length -eq (Get-Item -LiteralPath $dstFile).Length) -and
+                [System.Linq.Enumerable]::SequenceEqual([System.IO.File]::ReadAllBytes($srcFile), [System.IO.File]::ReadAllBytes($dstFile))
+        if (-not $same) {
+            Add-Violation 'claude-mirror' "Out-of-sync file '.claude/skills/$rel'. Run .agents/scripts/Sync-ClaudeSkills.ps1."
+        }
+    }
+
+    foreach ($rel in ($dstSet | Sort-Object)) {
+        if (-not $srcSet.Contains($rel)) {
+            Add-Violation 'claude-mirror' "Stale file in .claude/skills/: '$rel'. Run .agents/scripts/Sync-ClaudeSkills.ps1."
         }
     }
 }

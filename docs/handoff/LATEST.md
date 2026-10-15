@@ -1,27 +1,28 @@
-<!-- copy of docs/handoff/2026-10-14-release-perf.md -->
-# Handoff: release-perf
+<!-- copy of docs/handoff/2026-10-15-interactive-stop-gates.md -->
+# Handoff: interactive-stop-gates
 
 ## State
-- **Цель:** Оптимизация производительности и прозрачности выполнения скрипта релиза [`Invoke-Release.ps1`](../../.agents/skills/release/scripts/Invoke-Release.ps1), устранение 6.5-минутной паузы и видимости зависания при выполнении фазы `-Apply`.
-- **Достигнутый этап:** Stage 6 — Close (задача полностью реализована, протестирована и проверена на код-ревью).
+- **Цель:** Внедрение интерактивного кнопочного подтверждения на Стоп-гейтах Шаблона через нативный инструмент вопроса среды (Antigravity: `ask_question`, Claude Code: `AskUserQuestion`; с автоматическим текстовым fallback для сред без такого инструмента).
+- **Достигнутый этап:** Stage 6 — Close (маршрут **Development — Minor**: интервью, реализация In-Place, код-ревью и полный preflight завершены).
 - **Что сделано:**
-  1. В `Invoke-Release.ps1` реализован условный пропуск повторного тяжёлого прогона Pester в режиме `-Apply`, если `.scratch/release/plan.json` существует, его `HeadSha` в точности совпадает с текущим `HEAD`, и проверки в фазе `-Plan` были фактически валидированы (`ChecksValidated == true`). При этом быстрая структурная проверка [`Test-Template.ps1`](../../.agents/scripts/Test-Template.ps1) (<1 сек) сохраняется.
-  2. В `Invoke-Plan` добавлено сохранение булева флага `ChecksValidated` в файл плана, предотвращающее ложный пропуск тестов в apply, если план формировался с `-SkipChecks`.
-  3. В вызов дочернего процесса Pester добавлена конфигурация `Invoke-Pester -Configuration @{ Run = @{ Path = '$testsDir'; Exit = $true }; Output = @{ Verbosity = 'None' } }`, гарантирующая корректный ненулевой код возврата при падении тестов и исключающая создание мусорных артефактов `testResults.xml`.
-  4. Во все сценарии (`-Plan`, `-Apply`, `-PushOnly`, `-Undo`) добавлен вывод структурированных сообщений прогресса `[release] ...`, обеспечивающий полную прозрачность выполнения.
-  5. В [`tests/Invoke-Release.Tests.ps1`](../../tests/Invoke-Release.Tests.ps1) исправлена фикстура `New-ReleaseFixture` и добавлены 3 интеграционных теста новой логики.
-  6. В [`.agents/skills/release/SKILL.md`](../../.agents/skills/release/SKILL.md) обновлена документация этапа `-Apply`.
-- **Что в процессе:** Ничего, реализация завершена.
+  1. В корневом [`AGENTS.md`](../../AGENTS.md) в секции `## Stop gates` закреплён вызов интерактивного инструмента вопроса среды на всех Стоп-гейтах (Шаг 0, этапы Stage 1–5, флоу Analysis и Release) параллельно с выводом отчёта этапа в тело сообщения.
+  2. Зафиксирован стандарт вариантов кнопок:
+     - На Шаге 0 и подтверждающих Стоп-гейтах (Stages 1–4, Analysis, Release): 2 варианта — `(Recommended)` согласовать и перейти дальше, либо запросить правки/уточнения.
+     - На Стоп-гейте Stage 5 (Review): явное представление вариантов следующего шага в отчёте и в виде интерактивных кнопок выбора (`/close-task`, `/handoff`, дополнительные правки, `/retro`).
+  3. В `Hard guardrail` в [`AGENTS.md`](../../AGENTS.md) и в [`.agents/skills/code-review/SKILL.md`](../../.agents/skills/code-review/SKILL.md) закреплено, что явный выбор пользователем соответствующей кнопки действия на Стоп-гейте Stage 5 (`/close-task`, `/handoff`) или Release приравнивается к явной команде пользователя.
+  4. В [`AGENTS.md`](../../AGENTS.md), [`.agents/skills/grill-with-docs/SKILL.md`](../../.agents/skills/grill-with-docs/SKILL.md) и [`.agents/skills/analyze/SKILL.md`](../../.agents/skills/analyze/SKILL.md) синхронизировано указание нативных инструментов для Antigravity (`ask_question`) и Claude Code (`AskUserQuestion`), в [`.agents/skills/implement/SKILL.md`](../../.agents/skills/implement/SKILL.md) уточнена формулировка Стоп-гейта завершения реализации, а также синхронизировано зеркало `.claude/skills/`.
+- **Что в процессе:** Ничего, задача полностью завершена.
 - **Нюансы и решения:**
-  - Pester 5/6 по умолчанию не устанавливает ненулевой `$LASTEXITCODE` при падении тестов без явного указания `Run = @{ Exit = $true }` или `-CI`. Использование конфигурации с `Run.Exit = $true` надёжно и не создаёт артефактов NUnit.
+  - В Antigravity вызов `ask_question` в одном шаге ответа (`PLANNER_RESPONSE`) с текстовым отчётом рендерит отчёт прямо над карточкой с кнопками и ставит выполнение на паузу до клика пользователя, после чего агент сразу переходит к следующему этапу без лишнего хода.
+  - Единым источником истины по механике Стоп-гейтов оставлен раздел `## Stop gates` в [`AGENTS.md`](../../AGENTS.md), чтобы не дублировать правило во всех проходных скиллах (согласно дисциплине `writing-for-agents`).
 
 ## Open tickets
 none
 
 ## Next step
-Репозиторий готов к работе. При необходимости выпустить следующую версию шаблона с этой оптимизацией использовать `/release`.
+Репозиторий в чистом состоянии и готов к следующим задачам или выпуску релиза через `/release`.
 
 ## Recommended skills
-- [`release`](../../.agents/skills/release/SKILL.md) — релиз новой версии шаблона.
-- [`ask`](../../.agents/skills/ask/SKILL.md) — выбор подходящего навыка или маршрута для новой задачи.
-- [`retro`](../../.agents/skills/retro/SKILL.md) — ретроспектива для улучшения окружения агента.
+- [`ask`](../../.agents/skills/ask/SKILL.md) — выбор подходящего навыка или навыка маршрутизации для новой задачи.
+- [`release`](../../.agents/skills/release/SKILL.md) — выпуск новой версии Шаблона.
+- [`retro`](../../.agents/skills/retro/SKILL.md) — ретроспектива окружения агента.

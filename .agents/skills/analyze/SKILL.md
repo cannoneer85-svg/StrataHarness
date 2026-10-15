@@ -11,7 +11,7 @@ Run an Analysis task: the result is a finding written to `docs/analysis/`; code,
 
 ## 1. Interview
 
-One short round, with the harness's interactive question tool when it has one (Antigravity: `ask_question`), otherwise in the format of [grilling](../grilling/SKILL.md). Ask only for what the request leaves open. Cover four points:
+One short round, with the harness's interactive question tool when it has one (Antigravity: `ask_question`, Claude Code: `AskUserQuestion`), otherwise in the format of [grilling](../grilling/SKILL.md). Ask only for what the request leaves open. Cover four points:
 
 - **Question** — the exact question to answer and the decision it feeds.
 - **Audience** — who reads the document and what they already know.

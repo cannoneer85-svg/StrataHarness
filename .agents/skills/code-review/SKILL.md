@@ -94,13 +94,13 @@ End with a one-line summary: total findings per axis, and the worst issue _withi
 
 Fix every hard violation, spec gap, and critical Adversary finding, and each judgement call you agree with. For a finding you leave as is, give the reason in one line. Re-run ONLY targeted tests for the changed files (or lightweight validators like `Test-Template.ps1`/lint); the full heavy repository test suite is reserved for the close-task stage. Then show the user what you fixed and what you left.
 
-**At the stop gate**, explicitly present the user with the available next-step options and commands so they know what to do next:
+**At the stop gate**, explicitly present the user with the available next-step options and commands (and offer them as selectable choices via the harness's interactive question tool when available, per `AGENTS.md`) so they know what to do next:
 1. **Full task close** (`/close-task`, or commands like «закрывай задачу», «фиксируй», «мерджим»): runs preflight checks, generates the handoff document and updates `LATEST.md`, cleans finished scratch files and removes `.scratch/<feature>/` when complete, and creates a single conventional local git commit (never pushes).
 2. **Context transfer without commit** (`/handoff`, or «делай handoff»): summarizes conversation state into `docs/handoff/` and `LATEST.md` for a fresh session, preserves open tickets and `BASE_COMMIT`, cleans only finished tickets/temp files, and leaves all code uncommitted.
 3. **Further adjustments**: request any additional edits, refactoring, or tests before closing.
 4. **Environment retrospective** (`/retro`): if recurring friction, tooling issues, or preventable review mistakes were encountered, run a retrospective to capture actionable environment improvements (automated checks, linters, or standards).
 
-Then stop and wait. `/handoff`, `/close-task` and any commit run only on the user's explicit command.
+Then stop and wait. `/handoff`, `/close-task` and any commit run only on the user's explicit command (including selecting the corresponding action option in the interactive stop-gate prompt).
 
 ## Why three axes
 

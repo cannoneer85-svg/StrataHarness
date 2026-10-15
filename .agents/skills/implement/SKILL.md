@@ -62,4 +62,4 @@ Subagents run one at a time, in this workspace, on the current branch — no wor
 ## 5. Completion
 
 - Report to the user: the tickets implemented, the test commands you ran with their results, the deviations the implementers reported, and the final tickets map — the diagram and table from `TICKETS.md`.
-- Stop and ask the user for permission to run **/code-review**.
+- Stop at the implementation stop gate and ask the user for permission to run **/code-review**.

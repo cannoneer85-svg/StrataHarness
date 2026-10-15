@@ -53,14 +53,16 @@ Each stage ends at a stop gate. Read the stage's `SKILL.md` at the path below wh
 - **Adaptive follow-ups:** follow-up questions belong to the active round's theme; settle current decisions before moving to the next theme.
 - **User override:** the user may halt the interview at any time with a stop phrase such as «хватит / пиши спеку». The stop phrase closes all remaining mandatory rounds immediately; record the open frontier as assumptions in `.scratch/<feature>/OPEN_QUESTIONS.md`, and `/to-spec` lists them under Further Notes.
 - **Escalation signal:** if a Minor interview uncovers more than 4 open decision questions, announce re-categorisation to Feature immediately and run Round 2.
-- Ask interview questions with the harness's interactive question tool (Antigravity: `ask_question`) when it has one; grill-with-docs defines the rounds.
+- Ask interview questions with the harness's interactive question tool (Antigravity: `ask_question`, Claude Code: `AskUserQuestion`) when it has one; grill-with-docs defines the rounds.
 - Offer the spec only after every mandatory round of the current Category is done.
 
 ## Stop gates
 
-- One stage per response. End each stage — and Step 0 — by showing the result, then wait for the user's explicit confirmation before starting the next.
-- At the Stage 5 (Review) stop gate, explicitly present the user with the next-step options: full close via `/close-task` (preflight + handoff + scratch cleanup + local commit), context transfer via `/handoff` (session handoff without commit), or further edits.
-- Hard guardrail: run handoff or close, commit, or clean `.scratch/` only on an explicit user command, such as «делай handoff», «фиксируй», «закрывай задачу», «мерджим». The command `/release` / «выпускай релиз» is the single command permitting the agent to push, and ONLY after explicit confirmation on the release stop gate. Force-push (`--force`, `--force-with-lease`) is strictly prohibited under all circumstances. Other skills (`close-task`, `handoff`) retain the prohibition on push — publishing regular task work stays with the user.
+- One stage per response. End each stage — and Step 0, Analysis, and Release stop gates — by showing the result in the message body, then requesting the user's explicit confirmation before starting the next.
+- When the harness provides an interactive question tool, always call it at every stop gate alongside the stage report instead of asking in plain text (fall back to plain text only when the harness has no such tool):
+  - **Step 0 and confirmation stop gates (Stages 1–4, Analysis, Release):** present 2 options — `(Recommended)` approve and proceed, or request adjustments/clarifications.
+  - **Stage 5 (Review) stop gate:** explicitly present the next-step options in the report and as selectable choices: full close via `/close-task` (preflight + handoff + scratch cleanup + local commit), context transfer via `/handoff` (session handoff without commit), further edits, or `/retro` (when recurring friction occurred).
+- Hard guardrail: run handoff or close, commit, or clean `.scratch/` only on an explicit user command — either a typed command (such as «делай handoff», «фиксируй», «закрывай задачу», «мерджим») or selecting the corresponding action button in the Stage 5 interactive stop-gate prompt. The command `/release` / «выпускай релиз» is the single command permitting the agent to push, and ONLY after explicit confirmation on the release stop gate (via the interactive stop-gate prompt or typed confirmation). Force-push (`--force`, `--force-with-lease`) is strictly prohibited under all circumstances. Other skills (`close-task`, `handoff`) retain the prohibition on push — publishing regular task work stays with the user.
 
 ## Context budget
 

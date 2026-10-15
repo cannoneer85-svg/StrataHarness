@@ -8,6 +8,19 @@ Each release section is titled `## [X.Y.Z] - YYYY-MM-DD - <release title>` and m
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-15 - Harness P1/P2 improvements and stop-gate text precedence
+
+### Added
+- **Platform limits and fix hints in validator:** Enforce real parser limits in `Test-Template.ps1` (`yaml-frontmatter` colon-space quoting, `description-length` <= 1024 / <= 8000 total budget, `context-budget` <= 32 KiB for `AGENTS.md` and `CONTEXT.md`), accompanied by explicit `Fix: ...` remediation hints for all 14 rules.
+- **Orchestrator compaction recovery and rulings log:** Standardize `## Rulings & Decisions` and `## Spec AC Coverage` sections in ticket maps, introduce non-destructive recovery for in-progress tickets during compaction without `git reset`, and formalize deviation reporting via `Expected / Found / Why`.
+- **Evidence-based completion and test tracing:** Require explicit `[auto]` and `[manual]` prefixes on acceptance criteria across specs and tickets, enforce a spec coverage verification matrix in `to-tickets`, and mandate an `Evidence Table` in `implement` completion.
+- **Review false-positive suppression and rule citations:** Establish a closed `False Positives to Suppress` catalog in `code-review` and mandate exact standard/rule quotes for `hard violation` findings with deterministic aggregator filtering.
+- **Silent investigation and Step 0 signals:** Formalize repository pre-investigation (`Silent Investigation`) in `grill-with-docs` before Round 1, and refine Category selection signals in `AGENTS.md` (footprint, intent gaps, irreversible actions).
+- **Stop-gate mandatory text precedence:** Enforce that stage deliverables and reports must be generated directly in the message body on every stop gate before invoking interactive question tools, preventing obscured reports.
+
+### Changed
+- **PowerShell standards:** Document mandatory immediate local capture of regex named groups (`$Matches`) in `CODING_STANDARDS.md` to prevent silent capture overwrites across chained `-match` statements.
+
 ## [1.3.1] - 2026-10-15 - Template coding standards, Claude mirror validation, and fixture caching
 
 ### Added

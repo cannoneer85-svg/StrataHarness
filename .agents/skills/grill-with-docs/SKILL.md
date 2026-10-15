@@ -24,7 +24,7 @@ Within a round, work the grilling frontier; follow-up questions raised by the us
 
 ## Question format
 
-Ask each round through the harness's interactive question tool when it has one (Antigravity: `ask_question`, Claude Code: `AskUserQuestion`), with your recommended answer as the first option. Without such a tool, use the `grilling` question format.
+Ask each round through the harness's interactive question tool when it has one, with your recommended answer as the first option. Without such a tool, use the `grilling` question format.
 
 ## Interview log
 

@@ -11,7 +11,7 @@ Run an Analysis task: the result is a finding written to `docs/analysis/`; code,
 
 ## 1. Interview
 
-One short round, with the harness's interactive question tool when it has one (Antigravity: `ask_question`, Claude Code: `AskUserQuestion`), otherwise in the format of [grilling](../grilling/SKILL.md). Ask only for what the request leaves open. Cover four points:
+One short round, with the harness's interactive question tool when it has one, otherwise in the format of [grilling](../grilling/SKILL.md). Ask only for what the request leaves open. Cover four points:
 
 - **Question** — the exact question to answer and the decision it feeds.
 - **Audience** — who reads the document and what they already know.
@@ -20,7 +20,7 @@ One short round, with the harness's interactive question tool when it has one (A
 
 The interview is complete when all four points have an answer.
 
-**⛔ Stop gate.** Show the summary of the four points, the planned path `docs/analysis/YYYY-MM-DD-<topic>.md` and a short plan of the work. Wait for the user's explicit confirmation.
+**⛔ Stop gate.** First, write out the summary of the four points, the planned path `docs/analysis/YYYY-MM-DD-<topic>.md` and a short plan of the work in the message body. Only after finishing the report text, invoke the harness's interactive question tool (or ask in plain text when unavailable, per `AGENTS.md`) for explicit confirmation.
 
 ## 2. Work
 
@@ -32,7 +32,7 @@ The work is complete when every part of the question has an answer traced to a s
 
 Write `docs/analysis/YYYY-MM-DD-<topic>.md` (today's date; if the file exists, append `-2`, `-3`, …) from [`references/analysis-template.md`](references/analysis-template.md), in the human-facing language set in the root `AGENTS.md`. Fill every section and remove the template's guidance comments.
 
-**⛔ Stop gate.** Show the document's path, the conclusion and the limitations. Wait for approval; revise the draft on each remark until the user approves it.
+**⛔ Stop gate.** First, write out the document's path, the conclusion and the limitations in the message body. Only after finishing the report text, invoke the harness's interactive question tool (or ask in plain text when unavailable, per `AGENTS.md`) for approval; revise the draft on each remark until the user approves it.
 
 ## 4. Close
 

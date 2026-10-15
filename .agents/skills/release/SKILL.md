@@ -51,7 +51,7 @@ Read `.scratch/release/notes.draft.md` and `plan.json`:
 
 ### 3. Stop Gate
 
-Present the proposed release to the user at the stop gate:
+First, write out the complete proposed release report from start to finish in the message body:
 - Target version and tag (e.g. `1.1.0` / `v1.1.0`).
 - Proposed release title.
 - Edited release notes.
@@ -59,7 +59,7 @@ Present the proposed release to the user at the stop gate:
   - MAJOR candidate flags (e.g. removed or renamed skill folders).
   - Non-conventional commits.
 
-Wait for the owner's explicit confirmation or requested adjustments before proceeding. Do NOT run `-Apply` until the user explicitly approves.
+Only after finishing the full release report text, invoke the harness's interactive question tool (or ask in plain text when unavailable, per `AGENTS.md`) to request the owner's explicit confirmation or adjustments. Do NOT run `-Apply` until the user explicitly approves.
 
 ### 4. Apply
 

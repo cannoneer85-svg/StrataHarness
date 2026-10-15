@@ -15,14 +15,14 @@ In your first message, announce the **Type** and, for development, the **Categor
 - **Development** — the result changes code, configuration or tooling.
 - **Analysis** — the result is a finding or a document (research, comparison, audit); code stays unchanged.
 
-**Category** (development only). Weigh: modules touched, new entities or contracts, external integrations, open unknowns, fits in one session.
+**Category** (development only). Weigh: footprint (modules/files touched), intent gaps (clarity of requirements vs. open decisions), irreversible actions (data migrations, breaking contract changes, external side effects), open unknowns, and whether it fits in one session.
 
 | Category | Signals |
 |---|---|
-| Minor | 1–2 files in one module; no new entities or contracts; no integrations; few unknowns |
-| Feature | one subsystem; a new screen, endpoint, table or entity; integration against a known API; fits in one session |
-| Epic | several modules or a new service; core architecture or cross-cutting contracts change; hardware or protocol integration; many unknowns |
-| Fog (Туман) | the path to the result is not visible and will not fit in one session |
+| Minor | 1–2 files in one module (small footprint); intent is clear (no intent gaps); fully reversible (no irreversible actions or data migrations); no new entities or contracts; no integrations; few unknowns |
+| Feature | one subsystem; a new screen, endpoint, table or entity; moderate intent gaps resolved in 2 interview rounds; standard reversible changes or safe migrations; integration against a known API; fits in one session |
+| Epic | several modules or a new service (large footprint); major intent gaps; irreversible actions or destructive migrations; core architecture or cross-cutting contracts change; hardware or protocol integration; many unknowns |
+| Fog (Туман) | the path to the result is not visible; fundamental intent gaps; will not fit in one session |
 
 Re-categorise during the interview when answers reveal a different scale, up or down: announce the new Category with its reason and apply its round themes from then on.
 
@@ -59,6 +59,7 @@ Each stage ends at a stop gate. Read the stage's `SKILL.md` at the path below wh
 ## Stop gates
 
 - One stage per response. End each stage — and Step 0, Analysis, and Release stop gates — by showing the result in the message body, then requesting the user's explicit confirmation before starting the next.
+- **Mandatory Text Precedence:** Every stop gate response MUST generate the complete, detailed stage deliverable and report in the message body (`content`) in the exact same turn. Calling `ask_question` / `AskUserQuestion` with an empty or omitted text message body is strictly prohibited. The interactive question widget is rendered directly below the visible report for convenient one-click navigation, never as a replacement for the report.
 - When the harness provides an interactive question tool, always call it at every stop gate alongside the stage report instead of asking in plain text (fall back to plain text only when the harness has no such tool):
   - **Step 0 and confirmation stop gates (Stages 1–4, Analysis, Release):** present 2 options — `(Recommended)` approve and proceed, or request adjustments/clarifications.
   - **Stage 5 (Review) stop gate:** explicitly present the next-step options in the report and as selectable choices: full close via `/close-task` (preflight + handoff + scratch cleanup + local commit), context transfer via `/handoff` (session handoff without commit), further edits, or `/retro` (when recurring friction occurred).

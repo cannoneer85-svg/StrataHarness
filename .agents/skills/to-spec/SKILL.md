@@ -71,7 +71,7 @@ A list of testing decisions that were made. Include:
 
 ## Acceptance Criteria
 
-A numbered list of checkable criteria the finished feature must meet, including the error behaviour and edge cases settled in the interview.
+A numbered list of checkable criteria the finished feature must meet, including the error behaviour and edge cases settled in the interview. Each criterion MUST be prefixed with either `[auto]` (verifiable by automated tests or deterministic scripts) or `[manual]` (requires human/manual inspection).
 
 ## Out of Scope
 

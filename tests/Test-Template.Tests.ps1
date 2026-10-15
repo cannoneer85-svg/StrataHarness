@@ -148,3 +148,90 @@ Describe 'Test-Template.ps1 Claude mirror sync checks' -Tag 'Unit' {
     }
 }
 
+Describe 'Test-Template.ps1 YAML frontmatter and platform limits' -Tag 'Unit' {
+    It 'passes when fixture skill has quoted colon-space and valid description' {
+        $root = New-FixtureRepo
+        $skillDir = Join-Path $root '.agents' 'skills' 'demo'
+        New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $skillDir 'SKILL.md') -Value "---`nname: demo`ndescription: `"Quoted: with colon-space`"`n---`n# Demo`n"
+        Set-Content -LiteralPath (Join-Path $root '.agents' 'SKILLS.md') -Value "# Registry`n`n| [demo](skills/demo/SKILL.md) | Demo | авто | свой | active |`n"
+
+        $result = Invoke-TestTemplate $root
+        $result.ExitCode | Should -Be 0
+    }
+
+    It 'detects unquoted colon-space in YAML frontmatter and provides Fix hint' {
+        $root = New-FixtureRepo
+        $skillDir = Join-Path $root '.agents' 'skills' 'demo'
+        New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $skillDir 'SKILL.md') -Value "---`nname: demo`ndescription: Unquoted: with colon-space`n---`n# Demo`n"
+        Set-Content -LiteralPath (Join-Path $root '.agents' 'SKILLS.md') -Value "# Registry`n`n| [demo](skills/demo/SKILL.md) | Demo | авто | свой | active |`n"
+
+        $result = Invoke-TestTemplate $root
+        $result.ExitCode | Should -Be 1
+        $result.Output | Should -Match '\[yaml-frontmatter\]'
+        $result.Output | Should -Match 'Fix: Wrap the ''description'' value in quotes'
+    }
+
+    It 'detects single skill description exceeding 1024 characters' {
+        $root = New-FixtureRepo
+        $skillDir = Join-Path $root '.agents' 'skills' 'demo'
+        New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+        $longDesc = 'A' * 1025
+        Set-Content -LiteralPath (Join-Path $skillDir 'SKILL.md') -Value "---`nname: demo`ndescription: `"$longDesc`"`n---`n# Demo`n"
+        Set-Content -LiteralPath (Join-Path $root '.agents' 'SKILLS.md') -Value "# Registry`n`n| [demo](skills/demo/SKILL.md) | Demo | авто | свой | active |`n"
+
+        $result = Invoke-TestTemplate $root
+        $result.ExitCode | Should -Be 1
+        $result.Output | Should -Match '\[description-length\]'
+        $result.Output | Should -Match '1025 characters; maximum allowed is 1024'
+        $result.Output | Should -Match 'Fix:'
+    }
+
+    It 'detects total skill descriptions exceeding budget of 8000 characters' {
+        $root = New-FixtureRepo
+        $regLines = [System.Collections.Generic.List[string]]::new()
+        $regLines.Add("# Registry`n")
+        for ($i = 1; $i -le 9; $i++) {
+            $name = "demo$i"
+            $skillDir = Join-Path $root '.agents' 'skills' $name
+            New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+            $desc = 'D' * 950
+            Set-Content -LiteralPath (Join-Path $skillDir 'SKILL.md') -Value "---`nname: $name`ndescription: `"$desc`"`n---`n# $name`n"
+            $regLines.Add("| [$name](skills/$name/SKILL.md) | $name | авто | свой | active |")
+        }
+        Set-Content -LiteralPath (Join-Path $root '.agents' 'SKILLS.md') -Value ($regLines -join "`n")
+
+        $result = Invoke-TestTemplate $root
+        $result.ExitCode | Should -Be 1
+        $result.Output | Should -Match '\[description-length\]'
+        $result.Output | Should -Match 'maximum budget is 8000'
+        $result.Output | Should -Match 'Fix:'
+    }
+
+    It 'detects combined AGENTS.md and CONTEXT.md exceeding 32 KiB budget' {
+        $root = New-FixtureRepo
+        $bigAgents = '# Agent rules`n' + ('A' * 20000)
+        $bigContext = '# Context`n' + ('C' * 15000)
+        Set-Content -LiteralPath (Join-Path $root 'AGENTS.md') -Value $bigAgents
+        Set-Content -LiteralPath (Join-Path $root '.agents' 'CONTEXT.md') -Value $bigContext
+
+        $result = Invoke-TestTemplate $root
+        $result.ExitCode | Should -Be 1
+        $result.Output | Should -Match '\[context-budget\]'
+        $result.Output | Should -Match 'maximum allowed is 32768 bytes \(32 KiB\)'
+        $result.Output | Should -Match 'Fix:'
+    }
+
+    It 'ensures all violation messages include a Fix hint' {
+        $root = New-FixtureRepo
+        Set-Content -LiteralPath (Join-Path $root '.agents' 'SKILLS.md') -Value "# Registry`n`n| [missing](skills/missing/SKILL.md) | M | авто | свой | active |`n"
+
+        $result = Invoke-TestTemplate $root
+        $result.ExitCode | Should -Be 1
+        $result.Output | Should -Match '\[registry\]'
+        $result.Output | Should -Match 'Fix:'
+    }
+}
+
+

@@ -59,7 +59,22 @@ Subagents run one at a time, in this workspace, on the current branch — no wor
 5. **Retry once** — red or out of scope: spawn a fresh implementer with the same Brief, the failure log, and your remarks.
 6. **Stop and report to the user** on a second failure of the same ticket, on a `blocked` report or an open question only the user can answer, or on any deviation from the spec. These are the only early stops.
 
+**Compaction and session recovery.** If the conversation is compacted or restarted mid-run:
+1. Re-read `.scratch/<feature>/BASE_COMMIT`, `.scratch/<feature>/TICKETS.md` (including `## Rulings & Decisions`), and inspect the working tree (`git status`, `git diff`).
+2. Tickets marked `done` are settled and never re-dispatched.
+3. If a ticket is marked `in-progress` and uncommitted edits exist: do NOT run destructive commands (`git reset`, `checkout -- .`, `clean -fd`). Instead, run the ticket's targeted tests and compare the diff against its checkboxes:
+   - If tests are green and all checkboxes are satisfied: mark the ticket `done` in its file and `TICKETS.md`, log a ruling, and advance to the next ticket.
+   - If tests fail or work is partial: spawn a fresh implementer with the existing diff, the test failure output, and explicit instructions to bring the in-progress ticket to green without discarding valid work. Record the intervention in `## Rulings & Decisions`.
+4. If no ticket is `in-progress`, resume from step 1 of the main loop.
+
+**Recording rulings.** Whenever the Orchestrator makes an architectural choice, settles an ambiguous decision, or recovers an in-progress ticket, append a row to `## Rulings & Decisions` in `.scratch/<feature>/TICKETS.md` (`Ticket | Ruling / Decision | Why | Cost of being wrong`).
+
 ## 5. Completion
 
-- Report to the user: the tickets implemented, the test commands you ran with their results, the deviations the implementers reported, and the final tickets map — the diagram and table from `TICKETS.md`.
+- Compile an **Evidence Table** proving every claimed criterion:
+  - For Feature / Epic routes: map each ticket's acceptance criterion marked `[auto]` or `[manual]` to its verification proof:
+    `Criterion / Claim | Verification command & fresh result | Manual checks remaining`
+  - For Minor route: map each key decision / requirement from the interview log (`.scratch/<feature>/OPEN_QUESTIONS.md`) to its verification proof.
+  - Never claim a criterion is met without citing fresh test/command output executed in this verification step.
+- Report to the user: the tickets implemented, the Evidence Table, any deviations reported by implementers (Expected / Found / Why), and the final tickets map — diagram, table, and Rulings from `TICKETS.md`. Formulate this complete report directly in the message body (`content`); when interactive question tools (`ask_question` / `AskUserQuestion`) are used, never call them with empty message text.
 - Stop at the implementation stop gate and ask the user for permission to run **/code-review**.

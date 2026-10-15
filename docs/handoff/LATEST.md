@@ -1,23 +1,44 @@
-<!-- copy of docs/handoff/2026-10-15-retro-env-improvements.md -->
-# Handoff: retro-env-improvements
+<!-- Copy of docs/handoff/2026-10-15-analogs-p1-improvements.md -->
+# Handoff: analogs-p1-improvements
 
 ## State
-- **Цель:** Устранение точек трения окружения по итогам ретроспективы (`/retro`) после внедрения интерактивных Стоп-гейтов и выпуска `v1.3.0`.
-- **Достигнутый этап:** Stage 6 — Close (все 3 выбранных в `/retro` кандидата реализованы, протестированы и зафиксированы).
+- **Цель:** Реализация приоритетных доработок P1 и P2 из сравнительного анализа аналогов харнеса (`docs/analysis/2026-10-05-agent-harness-analogs.md`) и устранение скрытия отчётов на Стоп-гейтах по итогам ретроспективы.
+- **Достигнутый этап:** Stage 6 — Close (маршрут **Development — Feature**: интервью, спецификация `0006-analogs-p1-improvements-spec.md`, декомпозиция на 3 тикета, реализация, код-ревью, ретроспектива и полный preflight завершены).
 - **Что сделано:**
-  1. Создан корневой [`CODING_STANDARDS.md`](../../CODING_STANDARDS.md) на английском языке для самого Шаблона (содержит judgement-критерии для оси **Standards** в `/code-review`: `writing-for-agents`, контракт обратной совместимости `Initialize-Project.ps1 -Mode Update` и двухуровневое тестирование / изоляция фикстур в `$TestDrive`). При `Initialize-Project.ps1 -Mode New` он штатно заменяется на `templates/CODING_STANDARDS.md`.
-  2. В [`.agents/scripts/Test-Template.ps1`](../../.agents/scripts/Test-Template.ps1) добавлено правило **Rule 11 (`claude-mirror`)**: детерминированная проверка синхронизации `.claude/skills/` с `.agents/skills/` (через быстрое сравнение размеров и `SequenceEqual` байтовых массивов). В [`tests/Test-Template.Tests.ps1`](../../tests/Test-Template.Tests.ps1) добавлены 2 юнит-теста для Rule 11.
-  3. В [`tests/Initialize-Project.Tests.ps1`](../../tests/Initialize-Project.Tests.ps1) внедрено кэширование эталонных фикстур (`GoldenNewFixture` и `GoldenUpdateFixture`) в `BeforeAll` с очисткой в `AfterAll`, конвейерные сравнения `byte[] | Should -Be` заменены на `[System.Linq.Enumerable]::SequenceEqual(...) | Should -BeTrue`, отключены предупреждения `core.safecrlf` в фикстурах. Время прогона `Initialize-Project.Tests.ps1` сократилось с 274–307 с до 138.4 с.
+  1. **Валидатор Шаблона и технические лимиты платформ (Тикет 01):**
+     - В `.agents/scripts/Test-Template.ps1` добавлены проверки жестких лимитов: `yaml-frontmatter` (Rule 12, запрет незакавыченного `: ` в скалярах frontmatter), `description-length` (Rule 13, лимит $\le 1024$ на скилл и $\le 8000$ суммарно), `context-budget` (Rule 14, суммарный объем `AGENTS.md` и `.agents/CONTEXT.md` $\le 32$ КиБ).
+     - Все 14 правил валидатора снабжены точными подсказками по исправлению (`Fix: ...`).
+     - Исправлены шапки существующих скиллов `analyze` и `code-review`.
+     - Добавлено 10 модульных тестов Pester в `tests/Test-Template.Tests.ps1`.
+  2. **Восстановление Оркестратора и доказательства (Тикет 02):**
+     - В эталонный шаблон карты тикетов `.agents/skills/to-tickets/references/tickets-map-template.md` добавлена секция `## Rulings & Decisions` и `## Spec AC Coverage`.
+     - В шаблон отчёта субагента внедрён формат отклонений `Expected: <...> | Found: <...> | Why: <...>`.
+     - В шаблонах спецификаций и тикетов введена обязательная маркировка критериев `[auto]` и `[manual]`.
+     - В скилл `to-tickets` добавлен шаг верификации матрицы покрытия критериев спеки тикетами (`Spec AC -> Ticket(s)`).
+     - В скилле `implement` регламентирован протокол восстановления после compaction без деструктивного `git reset` и формирование таблицы доказательств `Evidence Table`.
+  3. **Фильтрация ложноположительных находок ревью, Silent Investigation и Шаг 0 (Тикет 03):**
+     - В `.agents/skills/code-review/SKILL.md` зафиксирован закрытый список `False Positives to Suppress` и обязательное цитирование правил для `hard violation` с детерминированной фильтрацией агрегатором.
+     - В `.agents/skills/grill-with-docs/SKILL.md` закреплено правило предварительного самостоятельного исследования репозитория (`Silent Investigation`) до 1-го раунда вопросов.
+     - В `AGENTS.md` в таблице категорий Шага 0 уточнены сигналы масштаба: площадь изменений (`footprint`), пробелы в намерении (`intent gaps`) и необратимые действия (`irreversible actions`).
+  4. **Ретроспектива и инвариант отображения отчётов на Стоп-гейтах (`/retro`):**
+     - В `AGENTS.md`, `implement/SKILL.md` и `code-review/SKILL.md` закреплён инвариант **Mandatory Text Precedence**: запрещено вызывать `ask_question` / `AskUserQuestion` с пустым или опущенным текстом сообщения; отчёт этапа всегда сначала выводится в чат в теле сообщения.
+  5. **Синхронизация и верификация:**
+     - Зеркало `.claude/skills/` полностью синхронизировано.
+     - Штатный валидатор `Test-Template.ps1` завершается успешно (`OK: 41 skills, Registry, flags and links are consistent`).
+     - Полный набор тестов (151 unit + 28 integration = 179 тестов) пройден с кодом возврата `0`.
 - **Что в процессе:** Ничего, задача полностью завершена.
 - **Нюансы и решения:**
-  - В Pester 5/6 передача `byte[]` по конвейеру в `Should -Be` поэлементно распаковывает массив в конвейер PowerShell, что на сотнях файлов в фикстурах давало ~150 секунд накладных расходов; использование `[System.Linq.Enumerable]::SequenceEqual` устраняет эту задержку.
+  - Исключена проверка лимита тела скилла в 500 строк, так как это рекомендация стиля Anthropic, а не жесткое техническое ограничение.
+  - Фильтрация замечаний ревью выполняется существующим агрегатором детерминированно, без затратного второго каскада субагентов.
+  - Интерактивные кнопки на стоп-гейтах сохранены, при этом гарантирован обязательный приоритет вывода полного Markdown-отчёта в тело сообщения в том же ходу.
 
 ## Open tickets
 none
 
 ## Next step
-Репозиторий в чистом состоянии и готов к следующим задачам.
+Репозиторий готов к работе над следующими задачами или к подготовке релиза через `/release`.
 
 ## Recommended skills
 - [`ask`](../../.agents/skills/ask/SKILL.md) — выбор подходящего навыка или маршрута для новой задачи.
 - [`release`](../../.agents/skills/release/SKILL.md) — выпуск новой версии Шаблона.
+- [`retro`](../../.agents/skills/retro/SKILL.md) — ретроспектива окружения агента.

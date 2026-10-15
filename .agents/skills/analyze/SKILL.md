@@ -1,6 +1,6 @@
 ---
 name: analyze
-description: Analysis flow — short interview, evidence gathering, then a dated finding document in docs/analysis/. Use when the task's result is a finding rather than a code change: research question, comparison, audit, evaluation, recommendation.
+description: "Analysis flow — short interview, evidence gathering, then a dated finding document in docs/analysis/. Use when the task's result is a finding rather than a code change: research question, comparison, audit, evaluation, recommendation."
 ---
 
 # Analyze

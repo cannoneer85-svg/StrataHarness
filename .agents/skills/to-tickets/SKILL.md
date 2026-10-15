@@ -85,8 +85,8 @@ Do NOT close the parent issue or edit its body.
 
 **Status:** ready-for-agent
 
-- [ ] Acceptance criterion 1
-- [ ] Acceptance criterion 2
+- [ ] `[auto]` Acceptance criterion 1
+- [ ] `[manual]` Acceptance criterion 2
 
 </local-ticket-template>
 
@@ -102,8 +102,8 @@ The end-to-end behaviour this ticket makes work, from the user's perspective —
 
 ## Acceptance criteria
 
-- [ ] Criterion 1
-- [ ] Criterion 2
+- [ ] `[auto]` Criterion 1
+- [ ] `[manual]` Criterion 2
 
 ## Blocked by
 
@@ -113,6 +113,17 @@ The end-to-end behaviour this ticket makes work, from the user's perspective —
 
 In either form, avoid specific file paths or code snippets — they go stale fast. Exception: if a prototype produced a snippet that encodes a decision more precisely than prose can (state machine, reducer, schema, type shape), inline it and note briefly that it came from a prototype. Trim to the decision-rich parts — not a working demo, just the important bits.
 
-### 6. Show the tickets map
+### 6. Verify spec coverage
 
-Show the user the published tickets map — the diagram, the table, and where it lives — then stop at the tickets stop gate. Done when every published ticket appears in the map with its Status.
+Before showing the tickets map, build a coverage matrix matching every Acceptance Criterion from the spec `docs/specs/<NNNN>-<feature>-spec.md` (or each requirement from the source issue/conversation if no formal spec exists) to the ticket(s) that deliver it. Every criterion must be accounted for:
+
+| Spec AC # / Requirement | Type | Ticket(s) |
+|---|---|---|
+| AC 1 | `[auto]` | 01 |
+| AC 2 | `[manual]` | 02 |
+
+Any uncovered requirement is a blocker: add or adjust tickets to cover it before showing the map to the user.
+
+### 7. Show the tickets map
+
+Show the user the published tickets map — the diagram, the table, the Rulings & Decisions section, the coverage matrix, and where they live — then stop at the tickets stop gate. Done when every published ticket appears in the map with its Status and all spec requirements are covered.

@@ -23,6 +23,8 @@ Write the map's prose, labels and table in the human-facing language set in the 
 
   Group tickets per class on one `class` line; omit a class line that has no tickets.
 - **Table** — one row per ticket in number order; the Status column copies the field verbatim.
+- **Spec AC Coverage** — mapping table between specification acceptance criteria (or context requirements) and ticket IDs (`Criteria | Type | Ticket(s)`). Required before the tickets map is approved.
+- **Rulings & Decisions** — architectural choices, non-obvious tradeoffs, or tactical decisions made during implementation (§4 Orchestrator). Columns: Ticket number/identifier, Ruling / Decision (what was decided), Why (rationale/context), Cost of being wrong (risk and blast radius). Initialized with a placeholder row before execution begins, updated by the Orchestrator as decisions occur.
 - **Sync** — whoever changes a ticket's Status updates, in the same edit, its class, its table row, and the class of every ticket that change unblocks (`blocked` → `ready`). When active work starts on any ticket (including `ready-for-human` executed interactively with the user), it must transition to `in-progress` (class `inprogress`) immediately.
 
 ## Block
@@ -64,4 +66,17 @@ flowchart TD
 | 02 | [<название тикета>](./issues/02-<slug>.md) | 01 | in-progress |
 | 03 | [<название тикета>](./issues/03-<slug>.md) | 01 | ready-for-agent |
 | 04 | [<название тикета>](./issues/04-<slug>.md) | 02, 03 | ready-for-agent |
+
+## Матрица покрытия критериев приёмки (Spec AC Coverage)
+
+| Критерий приёмки (`<NNNN>-<feature>-spec.md`) | Тип | Покрывающий тикет(ы) |
+|---|---|---|
+| **AC 1:** <описание критерия> | `[auto]` | `01` |
+| **AC 2:** <описание критерия> | `[manual]` | `02` |
+
+## Rulings & Decisions
+
+| Ticket | Ruling / Decision | Why | Cost of being wrong |
+|---|---|---|---|
+| — | *Пока нет записей* | — | — |
 ````

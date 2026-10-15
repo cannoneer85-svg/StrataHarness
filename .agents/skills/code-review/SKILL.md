@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: Review the changes since a fixed point (commit, branch, tag, or merge-base) along two core axes — Standards (does the code follow this repo's documented coding standards?) and Spec (does the code match what the originating issue/spec asked for?) — plus an optional third axis: Adversary (presumption of failure) on Epic or high-risk tasks. Runs reviews in parallel sub-agents and reports them side by side. Use when the user wants to review a branch, a PR, work-in-progress changes, or asks to "review since X".
+description: "Review the changes since a fixed point (commit, branch, tag, or merge-base) along two core axes — Standards (does the code follow this repo's documented coding standards?) and Spec (does the code match what the originating issue/spec asked for?) — plus an optional third axis: Adversary (presumption of failure) on Epic or high-risk tasks. Runs reviews in parallel sub-agents and reports them side by side. Use when the user wants to review a branch, a PR, work-in-progress changes, or asks to 'review since X'."
 ---
 
 Review of the changes between a fixed point and the working tree along two core axes, plus an optional third axis for high-risk changes:
@@ -64,13 +64,20 @@ Each smell reads *what it is* → *how to fix*; match it against the diff:
 
 **Minimal-Diff Breaches** ([`minimal-diff`](../minimal-diff/SKILL.md)) — speculative classes, a seam with only one adapter (count test adapters as adapters — see `codebase-design`), home-rolled wheels where standard libraries or existing utilities exist, unjustified dependencies, near-copies duplicating existing repo logic, or scattered patches instead of root-cause repair. → remove speculative abstractions, consolidate to root cause, adapt existing code.
 
+**False Positives to Suppress**
+Apply this closed list of false positives during review and aggregation:
+- **Untouched code outside diff**: Remarks or refactoring suggestions targeting code not modified in the current diff (unless the diff directly breaks a caller or dependent contract).
+- **Checks already enforced by tooling**: Formatting, linting, syntax, and invariant errors already caught by deterministic validation scripts or linters (e.g., `Test-Template.ps1`).
+- **Premature abstractions violating `minimal-diff`**: Suggestions to add extra layers, factories, indirection, or interfaces "for future extensibility" in violation of [`minimal-diff`](../minimal-diff/SKILL.md).
+- **Smells or style preferences framed as hard violations**: Treating Fowler smells or personal aesthetic preferences as hard violations when no documented repository rule in `CODING_STANDARDS.md` or `AGENTS.md` explicitly forbids them.
+
 ### 4. Spawn sub-agents in parallel
 
 **Standards sub-agent prompt** — include:
 
 - The change set from step 1: the diff command, the new-file list, and the commit list.
 - The list of standards-source files you found in step 3, **plus the smell baseline from step 3** pasted in full — the sub-agent has no other access to it.
-- The brief: "Report — per file/hunk where relevant — (a) every place the diff violates a documented standard: cite the standard (file + the rule); (b) any baseline smell or minimal-diff breach you spot (speculative abstractions, unjustified new dependencies, single-adapter seams without test stand-ins, near-copies duplicating existing code, scattered patches instead of root-cause fix); and (c) any concurrency or boundary safety hazards. Distinguish hard violations from judgement calls — documented-standard breaches can be hard, but baseline smells are always judgement calls, and a documented repo standard overrides the baseline. Do NOT run the repository test suite, integration tests, or build pipelines — testing and test execution belong to the caller/orchestrator; your role is static code review and standard compliance analysis only. Skip anything tooling enforces. Under 400 words."
+- The brief: "Report — per file/hunk where relevant — (a) every place the diff violates a documented standard: cite the standard (file + the exact rule quote); every hard violation MUST quote the exact documented rule from `CODING_STANDARDS.md` or `AGENTS.md` — findings without an exact rule quote are strictly judgement calls or smells, never hard violations; (b) any baseline smell or minimal-diff breach you spot (speculative abstractions, unjustified new dependencies, single-adapter seams without test stand-ins, near-copies duplicating existing code, scattered patches instead of root-cause fix); and (c) any concurrency or boundary safety hazards. Suppress false positives: untouched code outside the diff, anything tooling or linters enforce, speculative abstractions disguised as clean code, and personal style preferences lacking a documented repo rule. Distinguish hard violations from judgement calls — documented-standard breaches can be hard, but baseline smells are always judgement calls, and a documented repo standard overrides the baseline. Do NOT run the repository test suite, integration tests, or build pipelines — testing and test execution belong to the caller/orchestrator; your role is static code review and standard compliance analysis only. Under 400 words."
 
 **Spec sub-agent prompt** — include:
 
@@ -86,15 +93,20 @@ For tasks on the Epic route, or changes modifying authentication, permissions, d
 
 ### 5. Aggregate
 
+**False Positives & Uncited Hard Violations Filtering**:
+Before presenting findings and proceeding to fixes, the aggregating agent filters findings deterministically without invoking a second cascade of subagents:
+1. Discard any finding matching the `False Positives to Suppress` list.
+2. For any finding labelled as a `hard violation`, verify that it quotes the exact rule from `CODING_STANDARDS.md` or `AGENTS.md`. If no exact quote is present or the rule does not exist, downgrade it to a judgement call or discard it if unfounded.
+
 Present the reports under `## Standards`, `## Spec`, and (if spawned) `## Adversary` headings, verbatim or lightly cleaned. Do **not** merge or rerank findings across headings — the axes are deliberately separate (see _Why three axes_).
 
 End with a one-line summary: total findings per axis, and the worst issue _within each axis_ (if any). Don't pick a single winner across axes — that's the reranking the separation exists to prevent.
 
 ### 6. Fix, then stop
 
-Fix every hard violation, spec gap, and critical Adversary finding, and each judgement call you agree with. For a finding you leave as is, give the reason in one line. Re-run ONLY targeted tests for the changed files (or lightweight validators like `Test-Template.ps1`/lint); the full heavy repository test suite is reserved for the close-task stage. Then show the user what you fixed and what you left.
+Fix every validated hard violation (that passed filtering and cites an exact rule), spec gap, and critical Adversary finding, and each judgement call you agree with. For a finding you leave as is, give the reason in one line. Re-run ONLY targeted tests for the changed files (or lightweight validators like `Test-Template.ps1`/lint); the full heavy repository test suite is reserved for the close-task stage. Then show the user what you fixed and what you left.
 
-**At the stop gate**, explicitly present the user with the available next-step options and commands (and offer them as selectable choices via the harness's interactive question tool when available, per `AGENTS.md`) so they know what to do next:
+**At the stop gate**, formulate the complete review report directly in the message body (`content`), and explicitly present the user with the available next-step options and commands (and offer them as selectable choices via the harness's interactive question tool when available, never calling the tool with empty message text, per `AGENTS.md`) so they know what to do next:
 1. **Full task close** (`/close-task`, or commands like «закрывай задачу», «фиксируй», «мерджим»): runs preflight checks, generates the handoff document and updates `LATEST.md`, cleans finished scratch files and removes `.scratch/<feature>/` when complete, and creates a single conventional local git commit (never pushes).
 2. **Context transfer without commit** (`/handoff`, or «делай handoff»): summarizes conversation state into `docs/handoff/` and `LATEST.md` for a fresh session, preserves open tickets and `BASE_COMMIT`, cleans only finished tickets/temp files, and leaves all code uncommitted.
 3. **Further adjustments**: request any additional edits, refactoring, or tests before closing.

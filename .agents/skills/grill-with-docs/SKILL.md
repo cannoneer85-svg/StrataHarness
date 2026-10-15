@@ -8,6 +8,10 @@ Call the Skill tool twice, for "grilling" and "domain-modeling".
 
 ---
 
+## Silent Investigation
+
+Before formulating questions for Round 1, independently inspect the affected modules, codebases, tests, and documentation in the repository. Do not ask the user for facts, existing types, or current behavior that can be read directly from the codebase. The interview is strictly for settling open architectural forks, trade-offs, scope boundaries, and MVP decisions that repository context cannot answer on its own.
+
 ## Rounds
 
 The mandatory rounds per Category are set in the Routes table of the root `AGENTS.md`. There is no upper question cap: ask until no open architectural, interface, or MVP boundary decisions remain, settling implementation trivia with sensible defaults yourself. A stop command from the user (such as «хватит / пиши спеку») halts the interview immediately, closing all remaining rounds; record the open decision frontier as assumptions in `.scratch/<feature>/OPEN_QUESTIONS.md`, and `/to-spec` lists them under Further Notes. A route with N mandatory rounds runs the first N themes below, in order; adapt each theme to the domain (UI, API, data, hardware, documents):

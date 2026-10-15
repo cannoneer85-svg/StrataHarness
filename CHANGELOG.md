@@ -8,6 +8,15 @@ Each release section is titled `## [X.Y.Z] - YYYY-MM-DD - <release title>` and m
 
 ## [Unreleased]
 
+## [1.4.2] - 2026-10-15 - Ticket map colour enforcement, stop-gate tool calls, and Codex budget docs
+
+### Fixed
+- **Ticket map Mermaid colour classes and legend enforcement (`to-tickets`):** Require reading `references/tickets-map-template.md` before drawing the ticket dependency graph in Step 4 (`Quiz the user`) and explicitly mandate short node labels (`T<NN>["<NN> <short title>"]`), all four fixed `classDef` lines (`ready`, `inprogress`, `done`, `blocked`), initial `ready`/`blocked` node class assignments, and the status legend line across Steps 4, 5, and 7.
+- **Interactive stop-gate tool invocation (`AGENTS.md`):** Require calling the harness's interactive question tool (`ask_question` / `AskUserQuestion`) in the same turn immediately after writing out the full stage report, passing continuation options strictly as selectable tool choices rather than a plain-text list.
+
+### Other
+- **OpenAI Codex progressive disclosure budget documentation:** Clarify the platform origin of the 8,000-character total skill description budget in `Test-Template.ps1` violation hints and `SKILL-MECHANICS.md` (`### Description limits and context budget`).
+
 ## [1.4.1] - 2026-10-15 - Sequential report-then-question stop-gate rule
 
 ### Changed

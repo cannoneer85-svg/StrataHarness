@@ -8,6 +8,15 @@ Each release section is titled `## [X.Y.Z] - YYYY-MM-DD - <release title>` and m
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-10-15 - Template coding standards, Claude mirror validation, and fixture caching
+
+### Added
+- **Root `CODING_STANDARDS.md` for the Template**: Add an English `CODING_STANDARDS.md` at the repository root defining judgement-call standards for `/code-review` (`writing-for-agents` single source of truth, progressive disclosure, `-Mode Update` compatibility, and two-tier testing / fixture isolation).
+- **Claude skills mirror sync check (Rule 11)**: Add Rule 11 (`claude-mirror`) to `Test-Template.ps1` and unit tests in `tests/Test-Template.Tests.ps1` to deterministically verify that `.claude/skills/` matches `.agents/skills/` when present.
+
+### Changed
+- **Integration test fixture caching & byte comparison**: Cache golden `New` and `Update` fixtures in `BeforeAll` and replace `byte[]` pipeline unrolling in `Should -Be` with `Enumerable.SequenceEqual` in `tests/Initialize-Project.Tests.ps1`, cutting test execution time in half and eliminating git CRLF warnings.
+
 ## [1.3.0] - 2026-10-15 - Interactive stop-gate confirmations across agent harnesses
 
 ### Added

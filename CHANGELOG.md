@@ -8,6 +8,16 @@ Each release section is titled `## [X.Y.Z] - YYYY-MM-DD - <release title>` and m
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-15 - Interactive stop-gate confirmations across agent harnesses
+
+### Added
+- **Interactive stop-gate confirmations**: Require calling the harness's interactive question tool (Antigravity `ask_question`, Claude Code `AskUserQuestion`) at every stop gate (Step 0, Stages 1–5, Analysis, and Release) alongside the stage report, with automatic fallback to plain text in harnesses without such a tool.
+- **Standardized stop-gate button options**: Define a 2-option confirmation pattern (`(Recommended)` approve and proceed vs. request adjustments/clarifications) for Step 0 and confirmation stop gates (Stages 1–4, Analysis, Release), and selectable next-step choices (`/close-task`, `/handoff`, further edits, `/retro`) at the Stage 5 (Review) stop gate.
+
+### Changed
+- **Hard guardrail button equivalence**: Recognize explicit selection of `/close-task`, `/handoff`, or release confirmation buttons in the interactive stop-gate prompt as an explicit user command.
+- **Cross-harness question tool references**: Synchronize `Claude Code: AskUserQuestion` alongside `Antigravity: ask_question` in `AGENTS.md`, `grill-with-docs`, and `analyze`.
+
 ## [1.2.1] - 2026-10-14 - Optimize release apply mode with conditional test caching and progress logging
 
 ### Changed

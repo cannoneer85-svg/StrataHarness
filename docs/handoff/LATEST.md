@@ -1,46 +1,42 @@
-<!-- Copy of docs/handoff/2026-10-15-analogs-p1-improvements.md -->
-# Handoff: analogs-p1-improvements
+<!-- Copied from docs/handoff/2026-10-15-codex-budget-hint.md -->
+# Передача контекста: Уточнение лимита контекстного бюджета OpenAI Codex в валидаторе и документации
 
-## State
-- **Цель:** Реализация приоритетных доработок P1 и P2 из сравнительного анализа аналогов харнеса (`docs/analysis/2026-10-05-agent-harness-analogs.md`) и устранение скрытия отчётов на Стоп-гейтах по итогам ретроспективы.
-- **Достигнутый этап:** Stage 6 — Close (маршрут **Development — Feature**: интервью, спецификация `0006-analogs-p1-improvements-spec.md`, декомпозиция на 3 тикета, реализация, код-ревью, ретроспектива и полный preflight завершены).
-- **Что сделано:**
-  1. **Валидатор Шаблона и технические лимиты платформ (Тикет 01):**
-     - В `.agents/scripts/Test-Template.ps1` добавлены проверки жестких лимитов: `yaml-frontmatter` (Rule 12, запрет незакавыченного `: ` в скалярах frontmatter), `description-length` (Rule 13, лимит $\le 1024$ на скилл и $\le 8000$ суммарно), `context-budget` (Rule 14, суммарный объем `AGENTS.md` и `.agents/CONTEXT.md` $\le 32$ КиБ).
-     - Все 14 правил валидатора снабжены точными подсказками по исправлению (`Fix: ...`).
-     - Исправлены шапки существующих скиллов `analyze` и `code-review`.
-     - Добавлено 10 модульных тестов Pester в `tests/Test-Template.Tests.ps1`.
-  2. **Восстановление Оркестратора и доказательства (Тикет 02):**
-     - В эталонный шаблон карты тикетов `.agents/skills/to-tickets/references/tickets-map-template.md` добавлена секция `## Rulings & Decisions` и `## Spec AC Coverage`.
-     - В шаблон отчёта субагента внедрён формат отклонений `Expected: <...> | Found: <...> | Why: <...>`.
-     - В шаблонах спецификаций и тикетов введена обязательная маркировка критериев `[auto]` и `[manual]`.
-     - В скилл `to-tickets` добавлен шаг верификации матрицы покрытия критериев спеки тикетами (`Spec AC -> Ticket(s)`).
-     - В скилле `implement` регламентирован протокол восстановления после compaction без деструктивного `git reset` и формирование таблицы доказательств `Evidence Table`.
-  3. **Фильтрация ложноположительных находок ревью, Silent Investigation и Шаг 0 (Тикет 03):**
-     - В `.agents/skills/code-review/SKILL.md` зафиксирован закрытый список `False Positives to Suppress` и обязательное цитирование правил для `hard violation` с детерминированной фильтрацией агрегатором.
-     - В `.agents/skills/grill-with-docs/SKILL.md` закреплено правило предварительного самостоятельного исследования репозитория (`Silent Investigation`) до 1-го раунда вопросов.
-     - В `AGENTS.md` в таблице категорий Шага 0 уточнены сигналы масштаба: площадь изменений (`footprint`), пробелы в намерении (`intent gaps`) и необратимые действия (`irreversible actions`).
-  4. **Ретроспектива и двухшаговая последовательность на Стоп-гейтах (`/retro`):**
-     - В `AGENTS.md`, `grill-with-docs/SKILL.md`, `analyze/SKILL.md`, `implement/SKILL.md`, `code-review/SKILL.md` и `release/SKILL.md` удалена привязка к именам конкретных инструментов (`ask_question` / `AskUserQuestion`) в пользу универсального `the harness's interactive question tool`.
-     - Вместо двусмысленных формулировок «in the same turn / alongside» закреплена строгая последовательность из двух шагов: (1) сначала полностью, от начала до конца, вывести текст отчёта этапа в тело сообщения; (2) только после завершения текста отчёта вызвать интерактивный инструмент вопроса с вариантами продолжения.
-     - В `CODING_STANDARDS.md` зафиксировано правило изоляции именованных групп регулярных выражений (`$Matches`) в PowerShell-скриптах.
-  5. **Синхронизация и верификация:**
-     - Зеркало `.claude/skills/` полностью синхронизировано.
-     - Штатный валидатор `Test-Template.ps1` завершается успешно (`OK: 41 skills, Registry, flags and links are consistent`).
-     - Полный набор тестов (151 unit + 28 integration = 179 тестов) пройден с кодом возврата `0`.
-- **Что в процессе:** Ничего, задача полностью завершена.
-- **Нюансы и решения:**
-  - Исключена проверка лимита тела скилла в 500 строк, так как это рекомендация стиля Anthropic, а не жесткое техническое ограничение.
-  - Фильтрация замечаний ревью выполняется существующим агрегатором детерминированно, без затратного второго каскада субагентов.
-  - Интерактивные кнопки на стоп-гейтах сохранены и сделаны кросс-харнесными (Antigravity, Claude Code, Codex и др.) за счёт строгой последовательности «сначала весь текст отчёта → затем вызов интерактивного вопроса».
+- **Дата:** 2026-10-15
+- **Ветка:** `main`
+- **Категория:** Minor
+- **Статус:** Завершено (`/close-task`)
 
-## Open tickets
-none
+---
 
-## Next step
-Репозиторий готов к работе над следующими задачами или к подготовке релиза через `/release`.
+## Состояние
 
-## Recommended skills
-- [`ask`](../../.agents/skills/ask/SKILL.md) — выбор подходящего навыка или маршрута для новой задачи.
-- [`release`](../../.agents/skills/release/SKILL.md) — выпуск новой версии Шаблона.
-- [`retro`](../../.agents/skills/retro/SKILL.md) — ретроспектива окружения агента.
+### Цель
+Сделать диагностическое сообщение валидатора [`Test-Template.ps1`](file:///d:/YandexDisk/MyProjects/AI/strataharness/.agents/scripts/Test-Template.ps1) и руководство по механике скиллов [`SKILL-MECHANICS.md`](file:///d:/YandexDisk/MyProjects/AI/strataharness/.agents/skills/writing-for-agents/SKILL-MECHANICS.md) прозрачными для разработчиков и агентов, явно указав платформенное происхождение суммарного лимита описаний скиллов (8 000 символов) — требование совместимости с рантаймом OpenAI Codex и предотвращение отсечения избыточных скиллов.
+
+### Что сделано
+1. В [`.agents/scripts/Test-Template.ps1`](file:///d:/YandexDisk/MyProjects/AI/strataharness/.agents/scripts/Test-Template.ps1#L179-L181) обновлен текст нарушения правила `description-length`:
+   - В само сообщение об ошибке добавлено: `maximum budget for OpenAI Codex compatibility is 8000 characters (excess skills may be omitted by runtime)`.
+   - В подсказку `Fix:` добавлено пояснение: `(Codex progressive disclosure limit)`.
+2. В [`tests/Test-Template.Tests.ps1`](file:///d:/YandexDisk/MyProjects/AI/strataharness/tests/Test-Template.Tests.ps1#L205-L210) актуализирован юнит-тест проверки текста ошибки валидатора.
+3. В [`.agents/skills/writing-for-agents/SKILL-MECHANICS.md`](file:///d:/YandexDisk/MyProjects/AI/strataharness/.agents/skills/writing-for-agents/SKILL-MECHANICS.md#L16-L23) добавлен подраздел `### Description limits and context budget` с явным разделением двух границ:
+   - Лимит на отдельный `SKILL.md` (1 024 символа по спецификации Agent Skills).
+   - Суммарный лимит на каталог описаний (8 000 символов по рантайм-бюджету прогрессивного раскрытия OpenAI Codex).
+4. Зеркало [`.claude/skills/writing-for-agents/SKILL-MECHANICS.md`](file:///d:/YandexDisk/MyProjects/AI/strataharness/.claude/skills/writing-for-agents/SKILL-MECHANICS.md) синхронизировано через [`.agents/scripts/Sync-ClaudeSkills.ps1`](file:///d:/YandexDisk/MyProjects/AI/strataharness/.agents/scripts/Sync-ClaudeSkills.ps1).
+5. Пройден полный цикл проверок: TDD Red/Green, предпроверочные тесты (35 тестов green), код-ревью субагентами Standards и Spec (0 нарушений).
+
+---
+
+## Открытые тикеты
+Нет (`none`).
+
+---
+
+## Следующий шаг
+Репозиторий находится в стабильном консистентном состоянии с проходящими тестами. Готов к выполнению следующих продуктовых задач или формированию релиза (`/release -Plan`).
+
+---
+
+## Рекомендуемые скиллы
+- [`ask`](file:///d:/YandexDisk/MyProjects/AI/strataharness/.agents/skills/ask/SKILL.md) — выбор подходящего маршрута и скилла для новой задачи.
+- [`code-review`](file:///d:/YandexDisk/MyProjects/AI/strataharness/.agents/skills/code-review/SKILL.md) — статический анализ изменений по осям Standards, Spec и Adversary.
+- [`release`](file:///d:/YandexDisk/MyProjects/AI/strataharness/.agents/skills/release/SKILL.md) — выпуск новой версии Шаблона.

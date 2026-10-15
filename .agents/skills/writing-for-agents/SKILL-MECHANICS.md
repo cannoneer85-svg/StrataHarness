@@ -13,6 +13,13 @@ Pick model-invocation only when the agent must reach the skill on its own, or an
 
 Shared reference that two user-invoked skills both need can live in neither — with no descriptions, neither can fire the other. Push it to a plain file outside the skill system: external reference any skill can point at.
 
+### Description limits and context budget
+
+Every model-invoked skill adds its `description` to the agent's permanent context on every turn. Two bounds govern description sizes across the Template:
+
+- **Single skill description:** maximum 1,024 characters (per the [Agent Skills](https://agentskills.io/specification) format specification).
+- **Total description budget:** maximum 8,000 characters across all skills in `.agents/skills/`. This ceiling preserves compatibility with OpenAI Codex runtime discovery budgets, where larger skill catalogs risk truncation or skill omission.
+
 ## Splitting by invocation
 
 The invocation cut of splitting (the sequence cut lives in `SKILL.md`): split off a model-invoked skill when you have a distinct leading word that should trigger it on its own — a trigger word you actually use in your prompts — or another skill must reach it. You pay context load for the new always-loaded description, so that independent reach has to be worth it.

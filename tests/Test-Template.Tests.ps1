@@ -205,7 +205,7 @@ Describe 'Test-Template.ps1 YAML frontmatter and platform limits' -Tag 'Unit' {
         $result = Invoke-TestTemplate $root
         $result.ExitCode | Should -Be 1
         $result.Output | Should -Match '\[description-length\]'
-        $result.Output | Should -Match 'maximum budget is 8000'
+        $result.Output | Should -Match 'maximum budget for OpenAI Codex compatibility is 8000 characters'
         $result.Output | Should -Match 'Fix:'
     }
 

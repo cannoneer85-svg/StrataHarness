@@ -177,7 +177,7 @@ foreach ($folder in $skillFolders) {
 }
 
 if ($totalSkillDescLength -gt $maxTotalDescLength) {
-    Add-Violation 'description-length' "Total length of all skill descriptions is $totalSkillDescLength characters; maximum budget is $maxTotalDescLength." "Fix: Shorten skill descriptions across .agents/skills/ to fit within the $maxTotalDescLength character budget."
+    Add-Violation 'description-length' "Total length of all skill descriptions is $totalSkillDescLength characters; maximum budget for OpenAI Codex compatibility is $maxTotalDescLength characters (excess skills may be omitted by runtime)." "Fix: Shorten skill descriptions across .agents/skills/ to fit within the $maxTotalDescLength character budget (Codex progressive disclosure limit)."
 }
 
 # --- Rule 4: relative links -------------------------------------------------------------

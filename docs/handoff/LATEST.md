@@ -1,9 +1,9 @@
-<!-- Copied from docs/handoff/2026-10-15-tickets-map-colors.md -->
-# Передача контекста: Обязательная цветовая градация и легенда Mermaid-карты тикетов в `to-tickets`
+<!-- Copied from docs/handoff/2026-10-16-interactive-questions-reliability.md -->
+# Передача контекста: Анализ надёжности интерактивных окон опроса (`ask_question` / `AskUserQuestion`)
 
-- **Дата:** 2026-10-15
+- **Дата:** 2026-10-16
 - **Ветка:** `main`
-- **Категория:** Minor
+- **Тип задачи:** Analysis
 - **Статус:** Завершено (`/close-task`)
 
 ---
@@ -11,30 +11,31 @@
 ## Состояние
 
 ### Цель
-Исключить пропуск чтения шаблона [`tickets-map-template.md`](../../.agents/skills/to-tickets/references/tickets-map-template.md) агентом на этапе создания тикетов (`/to-tickets`), из-за которого в превью (шаг 4) и итоговом отчёте (шаги 5 и 7) мог генерироваться неокрашенный граф `flowchart TD` без классов статусов (`classDef` / `class`), коротких меток узлов и строки легенды.
+Проанализировать причины систематических сбоев при использовании интерактивных окон опроса (`ask_question` в Antigravity, `AskUserQuestion` в Claude Code) на Стоп-гейтах и в раундах интервью Шаблона (`StrataHarness`), включая невызов окон на задачах категории **Epic** с сильными Pro-моделями в версии `v1.4.1` и пропадание текста отчёта перед модальным окном, и выработать целевую архитектурную рекомендацию.
 
 ### Что сделано
-1. В [`.agents/skills/to-tickets/SKILL.md`](../../.agents/skills/to-tickets/SKILL.md#L50-L55) (шаг 4 `Quiz the user`) косвенная отсылка `(see step 5)` заменена на прямое требование прочитать [`references/tickets-map-template.md`](../../.agents/skills/to-tickets/references/tickets-map-template.md) перед отрисовкой диаграммы и включить три обязательных элемента:
-   - **Nodes:** короткие метки `T<NN>["<NN> <short title>"]` (до 4 слов).
-   - **Colour classes:** все четыре фиксированных `classDef` (`ready`, `inprogress`, `done`, `blocked`) и привязка `class` к каждому узлу (`ready` для стартового фронтира без блокеров, `blocked` для зависимых тикетов).
-   - **Legend:** строка `**Легенда:** ...` непосредственно под блоком Mermaid.
-2. В шагах 5 и 7 [`.agents/skills/to-tickets/SKILL.md`](../../.agents/skills/to-tickets/SKILL.md#L72-L130) явно закреплено требование включать все четыре `classDef`, привязку `class` и строку легенды как при сохранении карты тикетов (`TICKETS.md`), так и при выводе пользователю на стоп-гейте этапа.
-3. Синхронизировано зеркало `.claude/skills/to-tickets/SKILL.md` через [`.agents/scripts/Sync-ClaudeSkills.ps1`](../../.agents/scripts/Sync-ClaudeSkills.ps1).
-4. Пройдены валидатор Шаблона (`Test-Template.ps1` — 0 нарушений), полный набор Pester-тестов (`tests/` — 216 passed, 0 failed) и параллельное ревью `/code-review` по осям Standards и Spec (`0 hard violations`).
+1. Проведён инженерный аудит эволюции правил Стоп-гейтов в git-истории Шаблона (`v1.3.0` → `v1.4.0` → `v1.4.1` → `v1.4.2`) и всех точек вызова интерактивных вопросов в [`AGENTS.md`](../../AGENTS.md) и скиллах этапов.
+2. Подготовлен и утверждён аналитический документ [`docs/analysis/2026-10-16-interactive-questions-reliability.md`](../analysis/2026-10-16-interactive-questions-reliability.md), фиксирующий пять корневых технических причин ненадёжности:
+   - бистабильность авторегрессионной генерации связки `длинный Markdown-отчёт + блокирующий tool_call` в одном ходе LLM (срыв либо в пустой `content`, либо в `end_turn` без вызова тула на отчётах 1.5k–4k токенов в категории **Epic**);
+   - прямое противоречие системному промпту инструмента `ask_question` в Antigravity (`Don't use this tool to ask trivial questions that can be answered with a single word (e.g. yes/no); output regular text`), которому следуют сильные Pro-модели на бинарных Стоп-гейтах;
+   - удаление точных имён инструментов (`ask_question` / `AskUserQuestion`) и двухшаговая формулировка в коммите `df60643` (`v1.4.1`);
+   - непригодность плоской JSON-схемы `ask_question` для разветвлённого архитектурного интервью масштаба **Epic**;
+   - перехват фокуса и скролла модальным виджетом в UI харнессов.
+3. Сформулирована рекомендация перейти на архитектуру **«Plain-Text First»** (текстовые Стоп-гейты с нумерованными вариантами/командами и текстовый формат [`grilling`](../../.agents/skills/grilling/SKILL.md) в интервью).
 
 ---
 
 ## Открытые тикеты
-Нет (`none`).
+none
 
 ---
 
 ## Следующий шаг
-Репозиторий находится в чистом и консистентном состоянии. Можно переходить к следующим задачам или подготовке релиза (`/release -Plan`).
+При необходимости открыть задачу разработки (**Development — Minor/Feature**) для перевода [`AGENTS.md`](../../AGENTS.md) и скиллов этапов (`grill-with-docs`, `analyze`, `implement`, `code-review`, `release`, `close-task`) на текстовый протокол **«Plain-Text First»** согласно выводам [`docs/analysis/2026-10-16-interactive-questions-reliability.md`](../analysis/2026-10-16-interactive-questions-reliability.md).
 
 ---
 
 ## Рекомендуемые скиллы
-- [`ask`](../../.agents/skills/ask/SKILL.md) — выбор подходящего маршрута и скилла для новой задачи.
-- [`to-tickets`](../../.agents/skills/to-tickets/SKILL.md) — декомпозиция спецификации на вертикальные тикеты с окрашенной Mermaid-картой зависимостей.
-- [`release`](../../.agents/skills/release/SKILL.md) — выпуск новой версии Шаблона.
+- [`grill-with-docs`](../../.agents/skills/grill-with-docs/SKILL.md) — этап 1 для задачи разработки по переводу Стоп-гейтов и интервью на текстовый протокол.
+- [`implement`](../../.agents/skills/implement/SKILL.md) — реализация изменений в `AGENTS.md` и скиллах с синхронизацией зеркала `.claude/skills/`.
+- [`release`](../../.agents/skills/release/SKILL.md) — выпуск новой версии Шаблона после внесения изменений.

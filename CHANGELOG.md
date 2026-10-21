@@ -8,6 +8,16 @@ Each release section is titled `## [X.Y.Z] - YYYY-MM-DD - <release title>` and m
 
 ## [Unreleased]
 
+## [1.4.3] - 2026-10-21 - In-Place ticket threshold, PowerShell 5.1 support, and environment standards
+
+### Fixed
+- **Execution strategy `In-Place` ticket threshold (`implement`):** Narrow the `In-Place` condition in the execution strategy table to `Minor route, or 1–2 tickets whose total forecast stays under ~60k tokens` so that tasks with 3 or more tickets are deterministically routed to `Sequential Subagents` rather than shadowed by token estimates.
+- **Windows PowerShell 5.1 compatibility (`Test-Template.ps1` and `Sync-ClaudeSkills.ps1`):** Replace 3+ argument `Join-Path` calls, `.NET Core` `[System.IO.Path]::GetRelativePath` calls, `#Requires -Version 7.0`, `$IsWindows` reads under `Set-StrictMode`, and raw non-ASCII regex literals in UTF-8 no-BOM scripts with cross-edition equivalents (`\uXXXX` escapes, nested `Join-Path`, `.Substring(...)`), covered by Pester unit tests under `powershell.exe`.
+- **Environment configuration & secret fallback standards (`init-project`, `code-review`):** Add mandatory `.env.example` placeholder rules and a prohibition on hardcoded production URLs/credentials in fallback expressions to the downstream project `CODING_STANDARDS.md` template and the `Standards` review sub-agent brief.
+
+### Other
+- **Interactive question tool reliability analysis (`docs/analysis/`):** Record engineering analysis of interactive question tool (`ask_question` / `AskUserQuestion`) failure modes across stop gates and multi-round interviews (`docs/analysis/2026-10-16-interactive-questions-reliability.md`).
+
 ## [1.4.2] - 2026-10-15 - Ticket map colour enforcement, stop-gate tool calls, and Codex budget docs
 
 ### Fixed

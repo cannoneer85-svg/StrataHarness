@@ -156,4 +156,17 @@ Describe 'Sync-ClaudeSkills.ps1' -Tag 'Unit' {
 
         Assert-MirrorMatchesSource $root
     }
+
+    It 'runs cleanly under Windows PowerShell 5.1 (powershell.exe)' -Skip:(-not $IsWindows -or -not (Get-Command powershell.exe -ErrorAction SilentlyContinue)) {
+        $root = New-FixtureRepo
+        $scriptsDir = Join-Path $root '.agents/scripts'
+        New-Item -ItemType Directory -Path $scriptsDir -Force | Out-Null
+        Copy-Item -LiteralPath $script:SyncScript -Destination $scriptsDir
+
+        $scriptPath = Join-Path $scriptsDir 'Sync-ClaudeSkills.ps1'
+        $output = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $scriptPath 2>&1
+        $LASTEXITCODE | Should -Be 0 -Because ($output -join "`n")
+        ($output -join "`n") | Should -Match 'added 5, updated 0, removed 0'
+        Assert-MirrorMatchesSource $root
+    }
 }

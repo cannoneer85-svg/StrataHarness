@@ -20,7 +20,7 @@ Read the tickets and their **Blocked by** edges, and forecast the token footprin
 
 | Strategy | When | Who writes the code |
 |---|---|---|
-| In-Place | Minor route, or the forecast for all tickets stays under ~60k tokens | you, ticket by ticket, in this thread |
+| In-Place | Minor route, or 1–2 tickets whose total forecast stays under ~60k tokens | you, ticket by ticket, in this thread |
 | Sequential Subagents | 3 or more tickets, or any heavy ticket (large test suite, wide change, big token footprint) | one implementer subagent per ticket; you are the Orchestrator (§4) |
 | Multi-Session | a human must check the result between milestones | split the work into milestones, one session each, with the user's `/handoff` between them; each session picks In-Place or Sequential Subagents for its milestone |
 

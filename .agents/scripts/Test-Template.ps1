@@ -34,7 +34,7 @@ $ErrorActionPreference = 'Stop'
 
 . (Join-Path $PSScriptRoot 'SemVer.ps1')
 
-$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..' '..')).Path
+$RepoRoot = (Resolve-Path (Join-Path (Join-Path $PSScriptRoot '..') '..')).Path
 $AgentsDir = Join-Path $RepoRoot '.agents'
 $SkillsDir = Join-Path $AgentsDir 'skills'
 $RegistryPath = Join-Path $AgentsDir 'SKILLS.md'
@@ -59,8 +59,8 @@ function Add-Violation([string]$Rule, [string]$Message, [string]$Fix = '') {
     }
 }
 
-function Get-RelativePath([string]$Path) {
-    return [System.IO.Path]::GetRelativePath($RepoRoot, $Path).Replace('\', '/')
+function Get-RelativePath([string]$Path, [string]$Base = $RepoRoot) {
+    return $Path.Substring($Base.Length).TrimStart('\', '/').Replace('\', '/')
 }
 
 # Returns the YAML frontmatter text of a markdown file, or $null if there is none.
@@ -119,7 +119,7 @@ $maxSingleDescLength = 1024
 $maxTotalDescLength = 8000
 
 foreach ($folder in $skillFolders) {
-    $skillMd = Join-Path $SkillsDir $folder 'SKILL.md'
+    $skillMd = Join-Path (Join-Path $SkillsDir $folder) 'SKILL.md'
     if (-not (Test-Path -LiteralPath $skillMd -PathType Leaf)) {
         Add-Violation 'name' "'.agents/skills/$folder/SKILL.md' is missing." "Fix: Add SKILL.md to '.agents/skills/$folder/'."
         continue
@@ -162,7 +162,7 @@ foreach ($folder in $skillFolders) {
 
     $manualInSkill = (Get-YamlScalar $frontmatter 'disable-model-invocation') -eq 'true'
 
-    $openaiYaml = Join-Path $SkillsDir $folder 'agents' 'openai.yaml'
+    $openaiYaml = Join-Path (Join-Path (Join-Path $SkillsDir $folder) 'agents') 'openai.yaml'
     $manualInYaml = $false
     if (Test-Path -LiteralPath $openaiYaml -PathType Leaf) {
         $yamlText = Get-Content -LiteralPath $openaiYaml -Raw -Encoding utf8
@@ -183,10 +183,11 @@ if ($totalSkillDescLength -gt $maxTotalDescLength) {
 # --- Rule 4: relative links -------------------------------------------------------------
 
 $linkSources = [System.Collections.Generic.List[string]]::new()
-foreach ($candidate in @($RootAgentsPath, $RegistryPath, (Join-Path $SkillsDir 'ask' 'SKILL.md'))) {
+$askSkillMd = Join-Path (Join-Path $SkillsDir 'ask') 'SKILL.md'
+foreach ($candidate in @($RootAgentsPath, $RegistryPath, $askSkillMd)) {
     if (Test-Path -LiteralPath $candidate -PathType Leaf) { $linkSources.Add($candidate) }
 }
-$docsAgentsDir = Join-Path $RepoRoot 'docs' 'agents'
+$docsAgentsDir = Join-Path (Join-Path $RepoRoot 'docs') 'agents'
 if (Test-Path -LiteralPath $docsAgentsDir -PathType Container) {
     Get-ChildItem -LiteralPath $docsAgentsDir -File -Recurse -Filter '*.md' |
         ForEach-Object { $linkSources.Add($_.FullName) }
@@ -257,7 +258,9 @@ if (Test-Path -LiteralPath $VersionPath -PathType Leaf) {
 
 # --- Rule 8: legacy numeric quota phrasing ---------------------------------------------
 
-$quotaRegex = [regex]'(?i)\b\d+\s*[–—-]\s*\d+\s+(?:questions|вопрос(?:а|ов)?)\b|ровно\s+\d+\s+раунд|\bapply its round quota\b|\binterview quotas\b'
+# Unicode escapes (\u2013/\u2014 = en/em-dash, Cyrillic for 'вопрос(а|ов)' and 'ровно ... раунд')
+# keep script source ASCII-safe when parsed by Windows PowerShell 5.1 without a UTF-8 BOM.
+$quotaRegex = [regex]'(?i)\b\d+\s*[\u2013\u2014-]\s*\d+\s+(?:questions|\u0432\u043E\u043F\u0440\u043E\u0441(?:\u0430|\u043E\u0432)?)\b|\u0440\u043E\u0432\u043D\u043E\s+\d+\s+\u0440\u0430\u0443\u043D\u0434|\bapply its round quota\b|\binterview quotas\b'
 $activeAgentFiles = [System.Collections.Generic.List[string]]::new()
 
 if (Test-Path -LiteralPath $RootAgentsPath -PathType Leaf) {
@@ -286,14 +289,15 @@ foreach ($filePath in ($activeAgentFiles | Select-Object -Unique)) {
 
 if ($skillFolders -contains 'release') {
     if (Test-Path -LiteralPath $RegistryPath -PathType Leaf) {
+        $onlyTemplateTitle = [regex]::Unescape('\u0422\u043E\u043B\u044C\u043A\u043E \u0428\u0430\u0431\u043B\u043E\u043D')
         $registryText = [string](Get-Content -LiteralPath $RegistryPath -Raw -Encoding utf8)
-        if ($registryText -match '(?ms)##\s+Только Шаблон\s*\r?\n(?<section>.*)') {
+        if ($registryText -match "(?ms)##\s+$([regex]::Escape($onlyTemplateTitle))\s*\r?\n(?<section>.*)") {
             $templateOnlySection = $Matches['section']
             if ($templateOnlySection -notmatch '(?m)skills/release/SKILL\.md') {
-                Add-Violation 'release-registry' "The 'release' skill exists, but is not listed in the '## Только Шаблон' section of .agents/SKILLS.md." "Fix: Move or add 'release' skill entry under '## Только Шаблон' in .agents/SKILLS.md."
+                Add-Violation 'release-registry' "The 'release' skill exists, but is not listed in the '## $onlyTemplateTitle' section of .agents/SKILLS.md." "Fix: Move or add 'release' skill entry under '## $onlyTemplateTitle' in .agents/SKILLS.md."
             }
         } else {
-            Add-Violation 'release-registry' "The 'release' skill exists, but the '## Только Шаблон' section is missing in .agents/SKILLS.md." "Fix: Add '## Только Шаблон' section with 'release' skill to .agents/SKILLS.md."
+            Add-Violation 'release-registry' "The 'release' skill exists, but the '## $onlyTemplateTitle' section is missing in .agents/SKILLS.md." "Fix: Add '## $onlyTemplateTitle' section with 'release' skill to .agents/SKILLS.md."
         }
     }
 }
@@ -302,16 +306,17 @@ if ($skillFolders -contains 'release') {
 
 if (Test-Path -LiteralPath $AgentsDir -PathType Container) {
     $shFiles = @(Get-ChildItem -LiteralPath $AgentsDir -File -Recurse -Filter '*.sh')
+    $isWindowsHost = ($env:OS -eq 'Windows_NT') -or ((Test-Path variable:IsWindows) -and $IsWindows)
     $bashPath = $null
-    if ($IsWindows -and -not [string]::IsNullOrEmpty($env:ProgramFiles)) {
-        $gitBash = Join-Path $env:ProgramFiles 'Git' 'bin' 'bash.exe'
+    if ($isWindowsHost -and -not [string]::IsNullOrEmpty($env:ProgramFiles)) {
+        $gitBash = Join-Path (Join-Path (Join-Path $env:ProgramFiles 'Git') 'bin') 'bash.exe'
         if (Test-Path -LiteralPath $gitBash) {
             $bashPath = $gitBash
         }
     }
     if ($null -eq $bashPath) {
         $candidate = Get-Command 'bash' -ErrorAction SilentlyContinue
-        if ($null -ne $candidate -and (-not $IsWindows -or $candidate.Source -notmatch '(?i)system32\\bash\.exe$')) {
+        if ($null -ne $candidate -and (-not $isWindowsHost -or $candidate.Source -notmatch '(?i)system32\\bash\.exe$')) {
             $bashPath = $candidate.Source
         }
     }
@@ -332,16 +337,16 @@ if (Test-Path -LiteralPath $AgentsDir -PathType Container) {
 
 # --- Rule 11: .claude/skills mirror sync -----------------------------------------------
 
-$ClaudeSkillsDir = Join-Path $RepoRoot '.claude' 'skills'
+$ClaudeSkillsDir = Join-Path (Join-Path $RepoRoot '.claude') 'skills'
 if ((Test-Path -LiteralPath $ClaudeSkillsDir -PathType Container) -and (Test-Path -LiteralPath $SkillsDir -PathType Container)) {
     $srcSet = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
     Get-ChildItem -LiteralPath $SkillsDir -File -Recurse -Force | ForEach-Object {
-        [void]$srcSet.Add([System.IO.Path]::GetRelativePath($SkillsDir, $_.FullName).Replace('\', '/'))
+        [void]$srcSet.Add((Get-RelativePath $_.FullName $SkillsDir))
     }
 
     $dstSet = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
     Get-ChildItem -LiteralPath $ClaudeSkillsDir -File -Recurse -Force | ForEach-Object {
-        [void]$dstSet.Add([System.IO.Path]::GetRelativePath($ClaudeSkillsDir, $_.FullName).Replace('\', '/'))
+        [void]$dstSet.Add((Get-RelativePath $_.FullName $ClaudeSkillsDir))
     }
 
     foreach ($rel in ($srcSet | Sort-Object)) {

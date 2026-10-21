@@ -1,4 +1,3 @@
-#Requires -Version 7.0
 <#
 .SYNOPSIS
     Makes .claude/skills/ an exact copy of .agents/skills/ for Claude Code.
@@ -22,15 +21,18 @@
 #>
 [CmdletBinding()]
 param(
-    [string]$RepoRoot = (Join-Path $PSScriptRoot '..' '..')
+    [string]$RepoRoot
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+if ([string]::IsNullOrEmpty($RepoRoot)) {
+    $RepoRoot = Join-Path (Join-Path $PSScriptRoot '..') '..'
+}
 $root = (Resolve-Path -LiteralPath $RepoRoot).Path
-$sourceDir = Join-Path $root '.agents' 'skills'
-$mirrorDir = Join-Path $root '.claude' 'skills'
+$sourceDir = Join-Path (Join-Path $root '.agents') 'skills'
+$mirrorDir = Join-Path (Join-Path $root '.claude') 'skills'
 
 if (-not (Test-Path -LiteralPath $sourceDir -PathType Container)) {
     throw "Source folder not found: $sourceDir"
@@ -40,7 +42,7 @@ function Get-RelativeFileSet([string]$Dir) {
     $set = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
     if (Test-Path -LiteralPath $Dir -PathType Container) {
         Get-ChildItem -LiteralPath $Dir -Recurse -File -Force | ForEach-Object {
-            [void]$set.Add([IO.Path]::GetRelativePath($Dir, $_.FullName))
+            [void]$set.Add($_.FullName.Substring($Dir.Length).TrimStart('\', '/'))
         }
     }
     return , $set

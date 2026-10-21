@@ -232,6 +232,29 @@ Describe 'Test-Template.ps1 YAML frontmatter and platform limits' -Tag 'Unit' {
         $result.Output | Should -Match '\[registry\]'
         $result.Output | Should -Match 'Fix:'
     }
+
+    It 'runs cleanly under Windows PowerShell 5.1 (powershell.exe) including Cyrillic rules' -Skip:(-not $IsWindows -or -not (Get-Command powershell.exe -ErrorAction SilentlyContinue)) {
+        $root = New-FixtureRepo
+        $skillDir = Join-Path $root '.agents' 'skills' 'release'
+        $dstSkill = Join-Path $root '.claude' 'skills' 'release'
+        New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+        New-Item -ItemType Directory -Path $dstSkill -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $skillDir 'SKILL.md') -Value "---`nname: release`ndescription: `"Release skill`"`n---`n# Release`n" -NoNewline -Encoding utf8
+        Set-Content -LiteralPath (Join-Path $dstSkill 'SKILL.md') -Value "---`nname: release`ndescription: `"Release skill`"`n---`n# Release`n" -NoNewline -Encoding utf8
+        $regContent = "# Registry`n`n## Только Шаблон`n`n| [release](skills/release/SKILL.md) | Release | авто | свой | active |`n"
+        Set-Content -LiteralPath (Join-Path $root '.agents' 'SKILLS.md') -Value $regContent -Encoding utf8
+
+        $scriptPath = Join-Path $root '.agents' 'scripts' 'Test-Template.ps1'
+        $output = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $scriptPath 2>&1
+        $LASTEXITCODE | Should -Be 0 -Because ($output -join "`n")
+        ($output -join "`n") | Should -Match 'OK: 1 skills'
+
+        # Verify Cyrillic quota violation is also caught in PS 5.1
+        Set-Content -LiteralPath (Join-Path $root 'AGENTS.md') -Value "# Rules`n2–4 вопроса`n" -Encoding utf8
+        $failOutput = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $scriptPath 2>&1
+        $LASTEXITCODE | Should -Be 1
+        ($failOutput -join "`n") | Should -Match '\[quotas\]'
+    }
 }
 
 

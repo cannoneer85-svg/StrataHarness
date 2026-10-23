@@ -29,6 +29,7 @@ Break the work into **tracer bullet** tickets.
 <vertical-slice-rules>
 
 - Each slice cuts a narrow but COMPLETE path through every layer (schema, API, UI, tests) — vertical, NOT a horizontal slice of one layer
+- **No standalone "Tests-only" or single-layer tickets:** Every ticket MUST include its own `[auto]` unit/integration test criteria so each implementer runs TDD (red → green → refactor) and proves its slice green before finishing. Never defer automated tests for Tickets `01..N-1` into a final Ticket `N` (the only exception is the final integrate-and-verify ticket of an expand–contract wide refactor when intermediate batches cannot stay green alone).
 - A completed slice is demoable or verifiable on its own
 - Each slice is sized to fit in a single fresh context window
 - Any prefactoring should be done first
@@ -130,4 +131,11 @@ Any uncovered requirement is a blocker: add or adjust tickets to cover it before
 
 ### 7. Show the tickets map
 
-Show the user the published tickets map — the colour-coded Mermaid diagram (with all four `classDef` lines and `class` assignments), the legend line right below it, the table, the Rulings & Decisions section, the coverage matrix, and where they live — then stop at the tickets stop gate. Done when every published ticket appears in the map with its Status, its node colour class (`ready` or `blocked`), the legend, and all spec requirements are covered.
+Show the user the published tickets map — the header metadata (`Active Stage` and `Execution Strategy`), the colour-coded Mermaid diagram (with all four `classDef` lines and `class` assignments), the legend line right below it, the table, the Rulings & Decisions section, the coverage matrix, the proposed **Stage 4 Execution Strategy**, and where they live — then stop at the tickets stop gate.
+
+**Execution Strategy Selection Rule (must match `implement`):**
+- **In-Place:** Allowed ONLY for `Minor` or strictly **1–2 tickets** whose total forecast stays under `~60k tokens` and does not require multi-ticket edits across files `>1,000 lines`.
+- **Sequential Subagents (Orchestrator — 1 implementer subagent per ticket):** **Mandatory** whenever the breakdown has **3 or more tickets**, or **2 tickets** touching files `>1,000 lines` or exceeding `~60k tokens`, or any heavy ticket with a wide change footprint.
+- **Multi-Session:** Whenever a human check is required between milestones.
+
+Done when every published ticket appears in the map with its Status, its node colour class (`ready` or `blocked`), the legend, the Execution Strategy justification, and all spec requirements are covered.

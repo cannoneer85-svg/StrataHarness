@@ -9,6 +9,7 @@ Write the map's prose, labels and table in the human-facing language set in the 
 
 ## Rules
 
+- **Header metadata** — right below the spec/tickets links, record `**Active Stage:** <stage>` (`Stage 3 (Tickets)` → `Stage 4 (Implement)` → `Stage 5 (Code Review)`) and `**Execution Strategy:** <In-Place | Sequential Subagents | Multi-Session>`. Update `Active Stage` at each stage transition so post-compaction recovery always knows the active stage even after all tickets are `done`.
 - **Nodes** — one per ticket: id `T<NN>`, quoted label `"<NN> <short title>"` of at most four words.
 - **Edges** — one `T<A> --> T<B>` per blocking edge, read "A blocks B". The edges are exactly the tickets' **Blocked by** lines.
 - **Classes** — the four `classDef` lines are fixed. Each ticket gets one class, derived from its **Status** field, the source of truth:
@@ -33,6 +34,7 @@ Write the map's prose, labels and table in the human-facing language set in the 
 # <feature> — карта тикетов
 
 Спека: [`docs/specs/<NNNN>-<feature>-spec.md`](../../docs/specs/<NNNN>-<feature>-spec.md). Тикеты: [`issues/`](./issues/).
+**Active Stage:** Stage 3 (Tickets) | **Execution Strategy:** <In-Place | Sequential Subagents | Multi-Session>
 
 Стрелка `A --> B` означает «A блокирует B». Цвет узла показывает статус тикета. Источник истины по статусу — поле **Status** в файле тикета.
 

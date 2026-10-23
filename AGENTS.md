@@ -44,7 +44,7 @@ Each stage ends at a stop gate. Read the stage's `SKILL.md` at the path below wh
 | Route | Stages | Interview mandatory rounds |
 |---|---|---|
 | Minor | 1 → 4 (In-Place) → 5 → 6 | 1 round: Outline and happy path |
-| Feature | 1 → 2 → 3 → 4 → 5 → 6 | 2 rounds: Happy path + Errors & edge cases |
+| Feature | 1 → 2 → 3 → 4 (In-Place for 1–2 tickets; Orchestrator for ≥3) → 5 → 6 | 2 rounds: Happy path + Errors & edge cases |
 | Epic | 1 → 2 → 3 → 4 (Orchestrator) → 5 → 6 | 3 rounds: Happy path + Errors & edge cases + NFR |
 | Fog | 1 (wayfinder) → 2 → 3 → 4 → 5 → 6 | set by wayfinder |
 | Analysis | [analyze](.agents/skills/analyze/SKILL.md): interview ⛔ → work → draft in `docs/analysis/` ⛔ → close (handoff or close-task) | 1 short round: 4 points |
@@ -68,7 +68,7 @@ Each stage ends at a stop gate. Read the stage's `SKILL.md` at the path below wh
 ## Context budget
 
 - **Smart zone:** ≈120k tokens of working context.
-- Before writing code, propose an execution strategy — In-Place, Sequential Subagents or Multi-Session — sized against the Smart zone and the ticket graph. Criteria and the Orchestrator protocol: [implement](.agents/skills/implement/SKILL.md).
+- Before writing code (and at the Stage 3 stop gate), propose an execution strategy — **In-Place** (only for `Minor` or 1–2 tickets within ~60k tokens), **Sequential Subagents / Orchestrator** (mandatory for ≥3 tickets, or 2 tickets editing files >1,000 lines or exceeding ~60k tokens), or **Multi-Session**. Full criteria and the Orchestrator protocol: [implement](.agents/skills/implement/SKILL.md).
 
 ## Language
 

@@ -1,9 +1,9 @@
-<!-- Copied from docs/handoff/2026-10-22-retro-core-improvements.md -->
-# Передача контекста: Бэкпорт платформенных улучшений ядра Шаблона (`retro-core-improvements`)
+<!-- Copied from docs/handoff/2026-10-24-upstream-retro-improvements.md -->
+# Передача контекста: Внедрение откалиброванных улучшений из ретроспективы (`upstream-retro-improvements`)
 
-- **Дата:** 2026-10-22
+- **Дата:** 2026-10-24
 - **Ветка:** `main`
-- **Тип задачи:** Development (Minor)
+- **Тип задачи:** Analysis + Development (Minor)
 - **Статус:** Завершено (`/close-task`)
 
 ---
@@ -11,22 +11,25 @@
 ## Состояние
 
 ### Цель
-Критически оценить и перенести в ядро Шаблона (`StrataHarness`) платформенные улучшения, выявленные по итогам эксплуатации в дочернем проекте `phygital`, без загрязнения апстрима спецификой монорепозитория и подмодулей.
+Провести архитектурный аудит предложений из `STRATAHARNESS_UPSTREAM_PROPOSAL.md` дочернего проекта `phygital`, отделить универсальные улучшения **Шаблона** от избыточных порогов и локальной специфики монорепозитория (такой как `.agents/CONTEXT-MAP.md`), и внедрить откалиброванные правила в ядро **Шаблона** (`StrataHarness`).
 
 ### Что сделано
-1. **R1 — Уточнение выбора стратегии `In-Place` ([`.agents/skills/implement/SKILL.md`](../../.agents/skills/implement/SKILL.md)):**
-   - Условие строки `In-Place` в таблице выбора стратегии сужено до `Minor route, or 1–2 tickets whose total forecast stays under ~60k tokens`, чтобы задачи из 3 и более тикетов гарантированно направлялись в `Sequential Subagents` и не перехватывались первой строкой таблицы по оценке токенов.
-   - Генерация `BRIEF.md` сохранена исключительно для `Sequential Subagents` (`## 4`), а во всём файле оставлен канонический путь `.scratch/<feature>/` (без монорепо-специфики `<module>/`).
-2. **R2 — Совместимость проверочных скриптов с Windows PowerShell 5.1 и PowerShell 7+ ([`.agents/scripts/Test-Template.ps1`](../../.agents/scripts/Test-Template.ps1), [`.agents/scripts/Sync-ClaudeSkills.ps1`](../../.agents/scripts/Sync-ClaudeSkills.ps1)):**
-   - В `Test-Template.ps1` устранены все вызовы `Join-Path` с 3–4 аргументами, метод `.NET Core` `[System.IO.Path]::GetRelativePath` заменён на кросс-версионную операцию `.Substring($Base.Length).TrimStart('\', '/').Replace('\', '/')`, чтение `$IsWindows` защищено для `Set-StrictMode -Version Latest` в PS 5.1, а не-ASCII литералы в Правилах 8 и 9 переведены на ASCII-безопасные Unicode-последовательности (`\uXXXX` и `[regex]::Unescape`) для корректного парсинга UTF-8 файла без BOM в `powershell.exe`.
-   - В `Sync-ClaudeSkills.ps1` снято ограничение `#Requires -Version 7.0`, дефолт `$RepoRoot` перенесён из `param(...)` в тело скрипта (в PS 5.1 `$PSScriptRoot` пуст внутри объявления `param`), заменены 3-аргументные `Join-Path` и `[IO.Path]::GetRelativePath`.
-   - Добавлены тесты совместимости с `powershell.exe` в [`tests/Test-Template.Tests.ps1`](../../tests/Test-Template.Tests.ps1) и [`tests/Sync-ClaudeSkills.Tests.ps1`](../../tests/Sync-ClaudeSkills.Tests.ps1).
-3. **R3 — Исключение `git-hybrid-commit` из апстрима:**
-   - Принято решение оставить кастомный скилл `git-hybrid-commit` (`hybrid_commit.ps1`) локальным скиллом проекта `phygital`, чтобы не нарушать инвариант запрета `git push` в `AGENTS.md` и не расходовать общий бюджет длины описаний скиллов.
-4. **R4 — Стандарт `.env.example` и запрет боевых фоллбэков ([`.agents/skills/init-project/templates/CODING_STANDARDS.md`](../../.agents/skills/init-project/templates/CODING_STANDARDS.md), [`.agents/skills/code-review/SKILL.md`](../../.agents/skills/code-review/SKILL.md)):**
-   - В шаблон стандартов дочерних Проектов добавлен раздел `## Конфигурация окружения и секреты` (обязательность `.env.example` с фиктивными плейсхолдерами и запрет хардкода реальных токенов/адресов в дефолтных фоллбэках).
-   - В бриф субагента оси Standards в `code-review/SKILL.md` добавлена проверка опасностей конфигурации окружения.
-   - Синхронизировано зеркало `.claude/skills/`.
+1. **Аналитический аудит ([`docs/analysis/2026-10-23-upstream-retro-proposal-audit.md`](../analysis/2026-10-23-upstream-retro-proposal-audit.md)):**
+   - Оценены все 4 пункта входного предложения; отклонена привязка к несуществующему в апстриме `.agents/CONTEXT-MAP.md` и избыточные триггеры `>3 files` / `external I/O probes` для 1–2 тикетов; подготовлены откалиброванные диффы для 5 целевых файлов.
+2. **D1 — Синхронизация порогов `In-Place` vs `Orchestrator` в [`AGENTS.md`](../../AGENTS.md):**
+   - В таблице `Routes` маршрут `Feature` уточнён как `1 → 2 → 3 → 4 (In-Place for 1–2 tickets; Orchestrator for ≥3) → 5 → 6`.
+   - В разделе `Context budget` синхронизированы пороги выбора `In-Place` (`Minor` или 1–2 тикета до `~60k` токенов) против обязательного `Sequential Subagents / Orchestrator` (`≥3` тикетов или 2 тикета по файлам `>1,000` строк / `>60k` токенов) с анонсом стратегии на **Стоп-гейте** Этапа 3.
+3. **D2 — Правило выбора стратегии и запрет тестовых тикетов в [`.agents/skills/to-tickets/SKILL.md`](../../.agents/skills/to-tickets/SKILL.md):**
+   - В `<vertical-slice-rules>` добавлен запрет на вынос автотестов тикетов `01..N-1` в отдельный финальный тикет `N` (`No standalone "Tests-only" or single-layer tickets`, с оговоркой для финального шага `expand–contract`).
+   - В шаге 7 (`Show the tickets map`) добавлен обязательный вывод метаданных `Active Stage` / `Execution Strategy` и блок `Execution Strategy Selection Rule`.
+4. **D3 — Защита от потери стадии при Compaction в [`.agents/skills/to-tickets/references/tickets-map-template.md`](../../.agents/skills/to-tickets/references/tickets-map-template.md):**
+   - В `## Rules` и `## Block` добавлена строка `**Active Stage:** Stage 3 (Tickets) | **Execution Strategy:** <In-Place | Sequential Subagents | Multi-Session>`, обновляемая при переходах между этапами 3, 4 и 5.
+5. **D4 — `Hard override` стратегии и проверка `Active Stage` в [`.agents/skills/implement/SKILL.md`](../../.agents/skills/implement/SKILL.md):**
+   - В `## 2. Choose the execution strategy` добавлен `Hard override`, запрещающий `In-Place` при `≥3` тикетах или 2 тикетах по файлам `>1,000` строк даже при предварительном обсуждении `In-Place` на более ранних этапах, и обновление `Active Stage: Stage 4 (Implement)`.
+   - В блоке `Compaction and session recovery` добавлена проверка `Active Stage: Stage 5 (Code Review)`.
+6. **D5 & D6 — Детерминированный триггер `Adversary` в [`.agents/skills/code-review/SKILL.md`](../../.agents/skills/code-review/SKILL.md) и [`.agents/SKILLS.md`](../../.agents/SKILLS.md):**
+   - Субагент **Adversary** переведён из `optional (Epic & security-critical tasks only)` в обязательный по чек-листу из 3 условий (маршрут `Epic`, требование в `CODING_STANDARDS.md`, либо наличие в диффе любого из 5 классов риск-сигналов: процессы/shell, сеть/API/IPC, конкурентность/таймеры/кэши, аутентификация/права/секреты/конфиг, пути ФС/симлинки/миграции).
+   - В шаге 1 `code-review/SKILL.md` добавлено обновление `Active Stage: Stage 5 (Code Review)` в `TICKETS.md`; обновлена строка описания `code-review` в `.agents/SKILLS.md`; синхронизировано зеркало `.claude/skills/`.
 
 ---
 
@@ -36,9 +39,9 @@ none
 ---
 
 ## Следующий шаг
-При необходимости выпустить патч-релиз Шаблона (`v1.4.3`) с накопленными улучшениями через скилл `/release`.
+При необходимости выпустить новый патч-релиз Шаблона (`v1.4.4`) через скилл `/release` или опубликовать накопленные коммиты через `git push`.
 
 ---
 
 ## Рекомендуемые скиллы
-- [`release`](../../.agents/skills/release/SKILL.md) — планирование и выпуск новой версии Шаблона (`v1.4.3`).
+- [`release`](../../.agents/skills/release/SKILL.md) — планирование и выпуск новой версии Шаблона.

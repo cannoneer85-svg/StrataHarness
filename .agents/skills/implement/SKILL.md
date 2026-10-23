@@ -20,11 +20,12 @@ Read the tickets and their **Blocked by** edges, and forecast the token footprin
 
 | Strategy | When | Who writes the code |
 |---|---|---|
-| In-Place | Minor route, or 1–2 tickets whose total forecast stays under ~60k tokens | you, ticket by ticket, in this thread |
-| Sequential Subagents | 3 or more tickets, or any heavy ticket (large test suite, wide change, big token footprint) | one implementer subagent per ticket; you are the Orchestrator (§4) |
+| In-Place | Minor route, or strictly 1–2 tickets whose total forecast stays under ~60k tokens without multi-ticket edits on files >1,000 lines | you, ticket by ticket, in this thread |
+| Sequential Subagents | **Mandatory** for 3 or more tickets, 2 tickets editing files >1,000 lines, or any heavy ticket (large test suite, wide change, >60k token footprint) | one implementer subagent per ticket; you are the Orchestrator (§4) |
 | Multi-Session | a human must check the result between milestones | split the work into milestones, one session each, with the user's `/handoff` between them; each session picks In-Place or Sequential Subagents for its milestone |
 
 Multi-Session wins whenever a human check is needed; otherwise take the first row that matches.
+**Hard override:** If the task has **3 or more tickets** (or 2 tickets touching files `>1,000 lines` / exceeding `~60k tokens`), you MUST execute via **Sequential Subagents** (or Multi-Session) — never `In-Place`, even if `In-Place` was tentatively discussed in an earlier stage. Update `**Active Stage:** Stage 4 (Implement)` and `**Execution Strategy:**` in `.scratch/<feature>/TICKETS.md` when starting Stage 4.
 
 ## 3. Rules for whoever writes the code
 
@@ -60,7 +61,7 @@ Subagents run one at a time, in this workspace, on the current branch — no wor
 6. **Stop and report to the user** on a second failure of the same ticket, on a `blocked` report or an open question only the user can answer, or on any deviation from the spec. These are the only early stops.
 
 **Compaction and session recovery.** If the conversation is compacted or restarted mid-run:
-1. Re-read `.scratch/<feature>/BASE_COMMIT`, `.scratch/<feature>/TICKETS.md` (including `## Rulings & Decisions`), and inspect the working tree (`git status`, `git diff`).
+1. Re-read `.scratch/<feature>/BASE_COMMIT`, `.scratch/<feature>/TICKETS.md` (including `**Active Stage:**` and `## Rulings & Decisions`), and inspect the working tree (`git status`, `git diff`). If `Active Stage` is already `Stage 5 (Code Review)`, resume `/code-review` rather than re-running Stage 4.
 2. Tickets marked `done` are settled and never re-dispatched.
 3. If a ticket is marked `in-progress` and uncommitted edits exist: do NOT run destructive commands (`git reset`, `checkout -- .`, `clean -fd`). Instead, run the ticket's targeted tests and compare the diff against its checkboxes:
    - If tests are green and all checkboxes are satisfied: mark the ticket `done` in its file and `TICKETS.md`, log a ruling, and advance to the next ticket.

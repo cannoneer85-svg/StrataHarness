@@ -1,13 +1,13 @@
 ---
 name: code-review
-description: "Review the changes since a fixed point (commit, branch, tag, or merge-base) along two core axes — Standards (does the code follow this repo's documented coding standards?) and Spec (does the code match what the originating issue/spec asked for?) — plus an optional third axis: Adversary (presumption of failure) on Epic or high-risk tasks. Runs reviews in parallel sub-agents and reports them side by side. Use when the user wants to review a branch, a PR, work-in-progress changes, or asks to 'review since X'."
+description: "Review the changes since a fixed point (commit, branch, tag, or merge-base) along two core axes — Standards (does the code follow this repo's documented coding standards?) and Spec (does the code match what the originating issue/spec asked for?) — plus a third axis: Adversary (presumption of failure), mandatory on Epic or whenever diff risk signals match. Runs reviews in parallel sub-agents and reports them side by side. Use when the user wants to review a branch, a PR, work-in-progress changes, or asks to 'review since X'."
 ---
 
-Review of the changes between a fixed point and the working tree along two core axes, plus an optional third axis for high-risk changes:
+Review of the changes between a fixed point and the working tree along two core axes, plus a third axis triggered on risk signals:
 
 - **Standards** — does the code conform to this repo's documented coding standards?
 - **Spec** — does the code faithfully implement the originating issue / spec?
-- **Adversary** (optional, for Epic or high-risk tasks) — attacks the solution under a presumption of failure (race conditions, boundary breaches, unauthorized access, data loss).
+- **Adversary** (mandatory whenever route or diff risk signals match §4) — attacks the solution under a presumption of failure (race conditions, boundary breaches, unauthorized access, data loss).
 
 The axes run as **parallel sub-agents** so they don't pollute each other's context, then this skill aggregates their findings.
 
@@ -16,6 +16,8 @@ The issue tracker should have been provided to you. If `docs/agents/issue-tracke
 ## Process
 
 ### 1. Pin the fixed point
+
+If `.scratch/<feature>/TICKETS.md` exists, update its header to `**Active Stage:** Stage 5 (Code Review)` before spawning review sub-agents so post-compaction recovery knows Stage 5 is active.
 
 The fixed point defaults to the commit in `.scratch/<feature>/BASE_COMMIT`, recorded by `/implement` when the work started; `<feature>` is the feature under review in this conversation. A fixed point the user names — a commit SHA, branch name, tag, `main`, `HEAD~5`, etc. — takes precedence. If there is neither, ask for it.
 
@@ -87,8 +89,18 @@ Apply this closed list of false positives during review and aggregation:
 
 If the spec is missing, skip the Spec sub-agent and note this in the final report.
 
-**Adversary sub-agent (Epic & security-critical tasks only)**:
-For tasks on the Epic route, or changes modifying authentication, permissions, data migrations, or concurrent resources, spawn a third parallel sub-agent: **Adversary**.
+**Adversary sub-agent (Mandatory on Risk Signals — across Minor, Feature, and Epic)**:
+Spawn the third parallel sub-agent **Adversary** whenever ANY of the following holds:
+1. **Route:** The task is on the `Epic` route;
+2. **Repo standards:** The target module or directory is marked as requiring adversary/security review in `CODING_STANDARDS.md`;
+3. **Diff risk signals:** The change set (`git diff <base>` or new files) touches ANY of:
+   - Process, shell, or external command execution (`exec`, `spawn`, PowerShell, bash, SSH, `eval`);
+   - Network I/O, HTTP/REST/RPC handlers, WebSockets, IPC, or external API clients;
+   - Concurrency, async coordination (`Promise.all*`, workers, threads), locks/mutexes, queues, timers/polling, or shared state/caches;
+   - Authentication, authorization (RBAC/permissions/ACL), sessions, secrets, or environment config;
+   - File-system paths/traversal, symlinks/junctions, state persistence, or database migrations/writes.
+Skip `Adversary` only when none of the above signals apply (e.g., pure documentation, static UI/styling, isolated pure functions/types, or test-only refactors).
+
 - Brief: "Act as an independent adversary with a presumption of failure. Examine the diff to identify up to 3 concrete failure scenarios: race conditions, unhandled failure/boundary states, resource exhaustion, authorization bypasses, or silent data loss. Quote file and line for each scenario. Do NOT run the repository test suite or build pipelines — your role is static failure scenario and risk analysis against the diff only. Under 400 words."
 
 ### 5. Aggregate

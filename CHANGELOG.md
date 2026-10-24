@@ -8,6 +8,19 @@ Each release section is titled `## [X.Y.Z] - YYYY-MM-DD - <release title>` and m
 
 ## [Unreleased]
 
+## [1.4.4] - 2026-10-24 - Orchestrator strategy sync, Adversary risk triggers, and stage metadata
+
+### Added
+- **Stage 3–4 execution strategy synchronization and hard override (`AGENTS.md`, `to-tickets`, `implement`):** Synchronize `In-Place` (`Minor` or 1–2 tickets within `~60k` tokens without multi-ticket edits on files `>1,000` lines) vs `Sequential Subagents / Orchestrator` (mandatory for `≥3` tickets, or 2 tickets touching files `>1,000` lines or exceeding `~60k` tokens) across `AGENTS.md`, `to-tickets` Step 7, and `implement`, including a mandatory `Hard override` in Stage 4 even if `In-Place` was discussed earlier.
+- **Deterministic `Adversary` review triggers (`code-review`, `SKILLS.md`):** Make the third review sub-agent (`Adversary`) mandatory across `Minor`, `Feature`, and `Epic` routes whenever the task is on the `Epic` route, required by `CODING_STANDARDS.md`, or when the diff touches any of 5 risk signal categories (process/shell execution, network/API/IPC, concurrency/timers/caches, auth/permissions/secrets/env config, or file-system paths/symlinks/migrations).
+- **Stage boundary compaction metadata (`tickets-map-template.md`, `implement`, `code-review`):** Add `**Active Stage:**` and `**Execution Strategy:**` header metadata to `.scratch/<feature>/TICKETS.md`, updated across Stages 3, 4, and 5 so post-compaction recovery accurately resumes `/code-review` when all tickets are already `done`.
+
+### Fixed
+- **Prohibition on standalone test-only tickets (`to-tickets`):** Explicitly forbid deferring automated tests for Tickets `01..N-1` into a standalone final "Tests" ticket in `<vertical-slice-rules>` (preserving the `expand–contract` wide-refactor exception), ensuring every implementer sub-agent runs TDD on its own slice.
+
+### Other
+- **Upstream retrospective proposal audit (`docs/analysis/`):** Record the architectural audit and threshold calibration of the 4 downstream retrospective proposals in `docs/analysis/2026-10-23-upstream-retro-proposal-audit.md`.
+
 ## [1.4.3] - 2026-10-21 - In-Place ticket threshold, PowerShell 5.1 support, and environment standards
 
 ### Fixed

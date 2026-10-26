@@ -8,6 +8,11 @@ Each release section is titled `## [X.Y.Z] - YYYY-MM-DD - <release title>` and m
 
 ## [Unreleased]
 
+## [1.4.5] - 2026-10-26 - Dual-channel stop gates (text options + interactive tool call)
+
+### Fixed
+- **Dual-channel stop-gate continuation rule (`AGENTS.md`, `implement`, `code-review`, `analyze`, `release`):** Replace the `Do NOT print the continuation options as a text list in the report` prohibition with a mandatory dual-channel invariant at every stop gate (Step 0, Stages 1–5, Analysis, Release): agents must end the stage report with an explicit next-step summary and numbered options (`1 / 2` on confirmation gates, `1..4` on Stage 5 Review) in the message body as a deterministic fallback, and in the exact same turn invoke the interactive question tool (`ask_question` / `AskUserQuestion`) with matching options.
+
 ## [1.4.4] - 2026-10-24 - Orchestrator strategy sync, Adversary risk triggers, and stage metadata
 
 ### Added

@@ -20,7 +20,7 @@ One short round, with the harness's interactive question tool when it has one, o
 
 The interview is complete when all four points have an answer.
 
-**⛔ Stop gate.** First, write out the summary of the four points, the planned path `docs/analysis/YYYY-MM-DD-<topic>.md` and a short plan of the work in the message body. Only after finishing the report text, invoke the harness's interactive question tool (or ask in plain text when unavailable, per `AGENTS.md`) for explicit confirmation.
+**⛔ Stop gate.** First, write out the summary of the four points, the planned path `docs/analysis/YYYY-MM-DD-<topic>.md` and a short plan of the work in the message body, ending with the next active step (**Step 2: Work / Evidence gathering**) and numbered continuation options (`1` approve and proceed, `2` request adjustments). In the exact same turn immediately after the report and numbered text options, invoke the harness's interactive question tool (`ask_question` / `AskUserQuestion`, per `AGENTS.md`) with the matching options for explicit confirmation.
 
 ## 2. Work
 
@@ -32,7 +32,7 @@ The work is complete when every part of the question has an answer traced to a s
 
 Write `docs/analysis/YYYY-MM-DD-<topic>.md` (today's date; if the file exists, append `-2`, `-3`, …) from [`references/analysis-template.md`](references/analysis-template.md), in the human-facing language set in the root `AGENTS.md`. Fill every section and remove the template's guidance comments.
 
-**⛔ Stop gate.** First, write out the document's path, the conclusion and the limitations in the message body. Only after finishing the report text, invoke the harness's interactive question tool (or ask in plain text when unavailable, per `AGENTS.md`) for approval; revise the draft on each remark until the user approves it.
+**⛔ Stop gate.** First, write out the document's path, the conclusion and the limitations in the message body, ending with the next active step (**Step 4: Close — `/close-task` or `/handoff`**) and numbered continuation options (`1` approve draft, `2` request revisions). In the exact same turn immediately after the report and numbered text options, invoke the harness's interactive question tool (`ask_question` / `AskUserQuestion`, per `AGENTS.md`) with the matching options for approval; revise the draft on each remark until the user approves it.
 
 ## 4. Close
 

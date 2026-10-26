@@ -1,47 +1,37 @@
-<!-- Copied from docs/handoff/2026-10-24-upstream-retro-improvements.md -->
-# Передача контекста: Внедрение откалиброванных улучшений из ретроспективы (`upstream-retro-improvements`)
+> Копия файла `docs/handoff/2026-10-26-dual-stop-gate.md`
 
-- **Дата:** 2026-10-24
-- **Ветка:** `main`
-- **Тип задачи:** Analysis + Development (Minor)
-- **Статус:** Завершено (`/close-task`)
+# Handoff: Двойной контур на Стоп-гейтах (`dual-stop-gate`)
 
----
+- **Дата:** 2026-10-26
+- **Маршрут:** Development — Minor (`1 → 4 (In-Place) → 5 → 6`)
+- **Базовый коммит:** `ccf58f34f73b482e667393cf0e91d2b5cdcaaa7a`
 
-## Состояние
+## State
 
-### Цель
-Провести архитектурный аудит предложений из `STRATAHARNESS_UPSTREAM_PROPOSAL.md` дочернего проекта `phygital`, отделить универсальные улучшения **Шаблона** от избыточных порогов и локальной специфики монорепозитория (такой как `.agents/CONTEXT-MAP.md`), и внедрить откалиброванные правила в ядро **Шаблона** (`StrataHarness`).
+- **Цель:** Устранить проблему потери контекста продолжения на Стоп-гейтах, когда интерактивный инструмент опроса (`ask_question` / `AskUserQuestion`) не вызывается моделью на длинных отчётах или блокируется системным промптом среды, внедрив обязательный «двойной контур» (резюме следующего активного шага и нумерованный список вариантов в конце текста отчёта + одновременный вызов `ask_question` / `AskUserQuestion` в том же ходе).
+- **Достигнутый этап:** Этап 6 (`Close-task` — задача полностью завершена).
+- **Что сделано:**
+  1. В [`AGENTS.md`](../../AGENTS.md) (`## Stop gates`) удалён запрет `Do NOT print the continuation options as a text list in the report`. Зафиксировано правило двойного контура в одном ходе: сначала полный отчёт этапа, завершающийся явным указанием следующего активного шага и нумерованными вариантами (`1 / 2` на Шаге 0 и подтверждающих гейтах Stages 1–4, Analysis, Release; `1..4` на Stage 5 Review), и следом в этом же ходе вызов `ask_question` / `AskUserQuestion` с теми же опциями (печать текстового списка является обязательным fallback-контуром и никогда не заменяет вызов тула).
+  2. Синхронизированы формулировки Стоп-гейтов в скиллах этапов:
+     - [`.agents/skills/implement/SKILL.md`](../../.agents/skills/implement/SKILL.md)
+     - [`.agents/skills/code-review/SKILL.md`](../../.agents/skills/code-review/SKILL.md)
+     - [`.agents/skills/analyze/SKILL.md`](../../.agents/skills/analyze/SKILL.md)
+     - [`.agents/skills/release/SKILL.md`](../../.agents/skills/release/SKILL.md)
+  3. Обновлено зеркало `.claude/skills/` через `.agents/scripts/Sync-ClaudeSkills.ps1`.
+  4. Проведено двухконтурное код-ревью (`Standards`: 0 hard violations, 1 judgement call оставлен без изменений; `Spec`: 0 замечаний) и пройдены все preflight-проверки (`Test-Template.ps1` — OK, Pester — `218 passed, 0 failed`).
+- **Что в работе:** ничего (задача закрыта).
+- **Принятые решения и нюансы (не зафиксированные в отдельных спеках/ADR):**
+  - На маршруте `Minor` отдельная спецификация в `docs/specs/` не создавалась; решения `D1`–`D3` (формат нумерованного блока `1 / 2` и `1..4`, обязательность обоих каналов в одном ходе и синхронизация 4 скиллов этапов) полностью отражены в `AGENTS.md` и перечисленных `SKILL.md`.
 
-### Что сделано
-1. **Аналитический аудит ([`docs/analysis/2026-10-23-upstream-retro-proposal-audit.md`](../analysis/2026-10-23-upstream-retro-proposal-audit.md)):**
-   - Оценены все 4 пункта входного предложения; отклонена привязка к несуществующему в апстриме `.agents/CONTEXT-MAP.md` и избыточные триггеры `>3 files` / `external I/O probes` для 1–2 тикетов; подготовлены откалиброванные диффы для 5 целевых файлов.
-2. **D1 — Синхронизация порогов `In-Place` vs `Orchestrator` в [`AGENTS.md`](../../AGENTS.md):**
-   - В таблице `Routes` маршрут `Feature` уточнён как `1 → 2 → 3 → 4 (In-Place for 1–2 tickets; Orchestrator for ≥3) → 5 → 6`.
-   - В разделе `Context budget` синхронизированы пороги выбора `In-Place` (`Minor` или 1–2 тикета до `~60k` токенов) против обязательного `Sequential Subagents / Orchestrator` (`≥3` тикетов или 2 тикета по файлам `>1,000` строк / `>60k` токенов) с анонсом стратегии на **Стоп-гейте** Этапа 3.
-3. **D2 — Правило выбора стратегии и запрет тестовых тикетов в [`.agents/skills/to-tickets/SKILL.md`](../../.agents/skills/to-tickets/SKILL.md):**
-   - В `<vertical-slice-rules>` добавлен запрет на вынос автотестов тикетов `01..N-1` в отдельный финальный тикет `N` (`No standalone "Tests-only" or single-layer tickets`, с оговоркой для финального шага `expand–contract`).
-   - В шаге 7 (`Show the tickets map`) добавлен обязательный вывод метаданных `Active Stage` / `Execution Strategy` и блок `Execution Strategy Selection Rule`.
-4. **D3 — Защита от потери стадии при Compaction в [`.agents/skills/to-tickets/references/tickets-map-template.md`](../../.agents/skills/to-tickets/references/tickets-map-template.md):**
-   - В `## Rules` и `## Block` добавлена строка `**Active Stage:** Stage 3 (Tickets) | **Execution Strategy:** <In-Place | Sequential Subagents | Multi-Session>`, обновляемая при переходах между этапами 3, 4 и 5.
-5. **D4 — `Hard override` стратегии и проверка `Active Stage` в [`.agents/skills/implement/SKILL.md`](../../.agents/skills/implement/SKILL.md):**
-   - В `## 2. Choose the execution strategy` добавлен `Hard override`, запрещающий `In-Place` при `≥3` тикетах или 2 тикетах по файлам `>1,000` строк даже при предварительном обсуждении `In-Place` на более ранних этапах, и обновление `Active Stage: Stage 4 (Implement)`.
-   - В блоке `Compaction and session recovery` добавлена проверка `Active Stage: Stage 5 (Code Review)`.
-6. **D5 & D6 — Детерминированный триггер `Adversary` в [`.agents/skills/code-review/SKILL.md`](../../.agents/skills/code-review/SKILL.md) и [`.agents/SKILLS.md`](../../.agents/SKILLS.md):**
-   - Субагент **Adversary** переведён из `optional (Epic & security-critical tasks only)` в обязательный по чек-листу из 3 условий (маршрут `Epic`, требование в `CODING_STANDARDS.md`, либо наличие в диффе любого из 5 классов риск-сигналов: процессы/shell, сеть/API/IPC, конкурентность/таймеры/кэши, аутентификация/права/секреты/конфиг, пути ФС/симлинки/миграции).
-   - В шаге 1 `code-review/SKILL.md` добавлено обновление `Active Stage: Stage 5 (Code Review)` в `TICKETS.md`; обновлена строка описания `code-review` в `.agents/SKILLS.md`; синхронизировано зеркало `.claude/skills/`.
+## Open tickets
 
----
-
-## Открытые тикеты
 none
 
----
+## Next step
 
-## Следующий шаг
-При необходимости выпустить новый патч-релиз Шаблона (`v1.4.4`) через скилл `/release` или опубликовать накопленные коммиты через `git push`.
+Опубликовать локальный коммит в удалённый репозиторий (`git push`) или при необходимости выпустить патч-релиз Шаблона через `/release`.
 
----
+## Recommended skills
 
-## Рекомендуемые скиллы
-- [`release`](../../.agents/skills/release/SKILL.md) — планирование и выпуск новой версии Шаблона.
+- [`release`](../../.agents/skills/release/SKILL.md) — расчёт следующей версии SemVer, подготовка заметок о релизе и публикация тега после подтверждения на Стоп-гейте.
+- [`ask`](../../.agents/skills/ask/SKILL.md) — маршрутизация следующей задачи по правилам `AGENTS.md`.

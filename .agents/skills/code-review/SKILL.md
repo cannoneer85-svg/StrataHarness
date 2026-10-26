@@ -118,13 +118,13 @@ End with a one-line summary: total findings per axis, and the worst issue _withi
 
 Fix every validated hard violation (that passed filtering and cites an exact rule), spec gap, and critical Adversary finding, and each judgement call you agree with. For a finding you leave as is, give the reason in one line. Re-run ONLY targeted tests for the changed files (or lightweight validators like `Test-Template.ps1`/lint); the full heavy repository test suite is reserved for the close-task stage. Then show the user what you fixed and what you left.
 
-**At the stop gate**, first write out the complete review report from start to finish in the message body (findings per axis, what was fixed, what was left, and test results) together with the available next-step options below:
+**At the stop gate**, first write out the complete review report from start to finish in the message body (findings per axis, what was fixed, what was left, and test results) ending with the explicit numbered next-step options below in the report text:
 1. **Full task close** (`/close-task`, or commands like «закрывай задачу», «фиксируй», «мерджим»): runs preflight checks, generates the handoff document and updates `LATEST.md`, cleans finished scratch files and removes `.scratch/<feature>/` when complete, and creates a single conventional local git commit (never pushes).
 2. **Context transfer without commit** (`/handoff`, or «делай handoff»): summarizes conversation state into `docs/handoff/` and `LATEST.md` for a fresh session, preserves open tickets and `BASE_COMMIT`, cleans only finished tickets/temp files, and leaves all code uncommitted.
 3. **Further adjustments**: request any additional edits, refactoring, or tests before closing.
 4. **Environment retrospective** (`/retro`): if recurring friction, tooling issues, or preventable review mistakes were encountered, run a retrospective to capture actionable environment improvements (automated checks, linters, or standards).
 
-Only after finishing the full report text, invoke the harness's interactive question tool (when available, per `AGENTS.md`) with these selectable continuation choices, then stop and wait. `/handoff`, `/close-task` and any commit run only on the user's explicit command (including selecting the corresponding action option in the interactive stop-gate prompt).
+In the exact same turn immediately after the full report and numbered text options, invoke the harness's interactive question tool (`ask_question` / `AskUserQuestion`, per `AGENTS.md`) with these selectable continuation choices (printing the numbered options in the report is a mandatory fallback and never replaces the tool call), then stop and wait. `/handoff`, `/close-task` and any commit run only on the user's explicit command (including selecting the corresponding action option in the interactive stop-gate prompt).
 
 ## Why three axes
 

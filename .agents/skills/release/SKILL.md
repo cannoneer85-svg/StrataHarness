@@ -59,7 +59,7 @@ First, write out the complete proposed release report from start to finish in th
   - MAJOR candidate flags (e.g. removed or renamed skill folders).
   - Non-conventional commits.
 
-Only after finishing the full release report text, invoke the harness's interactive question tool (or ask in plain text when unavailable, per `AGENTS.md`) to request the owner's explicit confirmation or adjustments. Do NOT run `-Apply` until the user explicitly approves.
+End the release report text with the next active step (**Step 4: Apply release `vX.Y.Z` and atomic push**) and numbered continuation options (`1` approve and run `-Apply`, `2` request adjustments). In the exact same turn immediately after the full release report and numbered text options, invoke the harness's interactive question tool (`ask_question` / `AskUserQuestion`, per `AGENTS.md`) with the matching options to request the owner's explicit confirmation or adjustments. Do NOT run `-Apply` until the user explicitly approves.
 
 ### 4. Apply
 

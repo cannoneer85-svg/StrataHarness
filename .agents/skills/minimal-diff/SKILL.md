@@ -66,10 +66,11 @@ Examples:
 - `// TRADEOFF(01-auth): localized helper preferred over shared module until second consumer arrives`
 - `# TRADEOFF(fix-deploy): inlined curl retry logic to keep deployment script dependency-free`
 
-Such tradeoffs must be conscious, localized, and explicitly tagged so they can be identified, tracked, and revisited during refactoring or code review.
+Such tradeoffs must be conscious, localized, and explicitly tagged so they can be identified, tracked, and revisited during refactoring or code review. The same explicit tag is required on any unavoidable compiler, typechecker, or linter suppression directive.
 
 ## Implementation Principles
 
+- **Shape data at the boundary first:** For new or modified contracts within the task's scope, model types and data shapes before branching logic so invalid states are unrepresentable, and parse external input once at the trust boundary rather than scattering defensive `null` / `?.` guards that mask broken invariants inside core logic.
 - **Fix at the root, not at call sites:** When fixing a bug, find the source and repair it once. Applying N patches across N calling functions introduces N points of future failure.
 - **Prefer deletion to addition within the task's scope, and only code proven unused:** The best diff is one that removes obsolete or dead code within the task's boundaries while delivering the capability, without sweeping refactoring of unrelated code.
 - **Boring over clever:** Clever, dense code is difficult to debug under incident pressure. Prefer readable, idiomatically standard code.
@@ -83,3 +84,4 @@ Such tradeoffs must be conscious, localized, and explicitly tagged so they can b
 - ❌ Adding a new npm/pip package for a 2-line helper that standard library covers easily.
 - ❌ Writing a 1000-line home-rolled crypto/parser engine instead of using a trusted library.
 - ❌ Creating speculative abstractions, interfaces, or seams with only one adapter (count test adapters as adapters — see codebase-design).
+- ❌ Silencing compiler, typechecker, or linter diagnostics (`@ts-ignore`, `@ts-expect-error`, `as any`, `# type: ignore`, `eslint-disable`, `[SuppressMessage]`, `nolint`) without an adjacent `TRADEOFF(<ticket>): <why>` comment justifying why a clean fix without suppression is impossible in scope.

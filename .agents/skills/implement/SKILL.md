@@ -33,6 +33,7 @@ Multi-Session wins whenever a human check is needed; otherwise take the first ro
 - Design deep modules with narrow interfaces (**codebase-design**).
 - Keep the solution scope per **minimal-diff**; forbidden zones (security, authorization, boundary validation, error handling, backward compatibility, behavior tests) are never simplified.
 - Run typechecking and targeted unit tests per seam during implementation; running full heavy integration or E2E suites is reserved for completion (§5) and close-task preflight.
+- **2-strike premise reset:** When two consecutive fix attempts fail the same test or validator, pause edits, state their shared premise in one sentence, and verify it against the code or environment before a third attempt. If the premise breaks outside ticket scope or the third attempt fails the same gate, stop — report `blocked` with the falsified premise (subagent) or escalate to the user (In-Place).
 - Leave every change uncommitted; committing belongs to `/close-task`.
 
 **Ticket status.** Move each ticket's **Status** `ready-for-agent → in-progress → done`, and update `.scratch/<feature>/TICKETS.md` in the same edit. How to update the map — node classes, table row, the frontier (`blocked` → `ready`) — is defined once in [tickets-map-template.md § Rules](../to-tickets/references/tickets-map-template.md); follow its **Sync** rule. Under Sequential Subagents only the Orchestrator does this.

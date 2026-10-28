@@ -127,6 +127,8 @@ If a correct seam exists:
 4. Watch it pass.
 5. Re-run the Phase 1 feedback loop against the original (un-minimised) scenario.
 
+**2-strike premise reset.** When two consecutive fix attempts fail the regression test, Phase 1 loop, or validator, pause edits, write their shared premise in one sentence, and verify it via Phase 4 instrumentation before a third attempt. If the premise is falsified or a third attempt fails the same gate, return to Phase 3 to re-rank hypotheses (or escalate to the user if blocked).
+
 ## Phase 6 — Cleanup
 
 Required before declaring done:

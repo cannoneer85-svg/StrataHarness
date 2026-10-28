@@ -31,6 +31,7 @@ You are an implementer subagent, not the user-facing agent. The process rules in
 - You cannot ask the user. When a decision is ambiguous, take the option most consistent with the spec and list it under **Deviations / decisions**.
 - Write code test-first (red → green → refactor) at the seams above, testing external behaviour.
 - Run ONLY the targeted test command specified for your ticket in ## Seams and tests. Running full test suites, integration test suites, or whole-repository test commands is strictly prohibited for implementer subagents — whole-repository regression verification belongs exclusively to the Orchestrator at completion. Do NOT run baseline test suites at startup — the baseline was already verified by the Orchestrator.
+- **2-strike premise reset:** When two consecutive fix attempts fail the same targeted test or validator, pause edits, write their shared premise in one sentence, and verify it against the code or environment before a third attempt. If the premise breaks outside your ticket's scope or the third attempt fails the same gate, stop immediately and report `blocked` with the falsified premise.
 - <Project conventions: languages, code style, script rules, paths, file encoding.>
 
 ## Definition of done

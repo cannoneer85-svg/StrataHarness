@@ -32,11 +32,11 @@ Otherwise show the user the list of what is not ready and ask whether to close p
 
 ## 3. Handoff
 
-Read [`../handoff/SKILL.md`](../handoff/SKILL.md) and execute every step of it; fold its report into the summary in step 5. Its handoff document and `LATEST.md` join this task's commit.
+Read [`../handoff/SKILL.md`](../handoff/SKILL.md) and execute every step of it; fold its report into the summary in step 5. Its handoff document and `LATEST.md` join this task's commit unless git-ignored.
 
 ## 4. Commit
 
-Stage the task's files by explicit path — the files the task changed, created or deleted, plus the handoff document and `docs/handoff/LATEST.md`: `git add -A -- <paths>`. Out-of-scope files stay unstaged; `.scratch/` is git-ignored. Check `git diff --cached --stat` against that list before committing.
+Stage the task's files by explicit path — the files the task changed, created or deleted, plus the handoff document and `docs/handoff/LATEST.md`: `git add -A -- <paths>`. Filter candidate paths through `git check-ignore` first and omit any ignored paths (such as git-ignored `docs/analysis/` or `docs/handoff/` files); if no trackable changes remain to commit, skip `git commit` and report in step 5 that all artifacts were saved locally only. Out-of-scope files stay unstaged; `.scratch/` is git-ignored. Check `git diff --cached --stat` against that list before committing.
 
 Make exactly one commit. This message format is fixed and overrides any other commit convention, including a global `commit` skill:
 
@@ -58,8 +58,8 @@ Pass the subject and the body as two `-m` arguments to `git commit`. If a commit
 
 Report to the user, in the user's language:
 
-- the commit hash and subject, and the number of files committed;
+- the commit hash and subject, and the number of files committed (or that no commit was created because all task artifacts are git-ignored);
 - the handoff document's path and the files removed from `.scratch/`;
 - on a partial close: the open tickets left and the out-of-scope files left uncommitted;
-- that publishing is theirs: `git push` when they are ready;
+- when a commit was created, that publishing is theirs: `git push` when they are ready;
 - optional next step: if recurring friction, tooling failures, or preventable review findings occurred during the task, offer to run `/retro` to capture actionable agent environment improvements (automated checks, linters, or standards).

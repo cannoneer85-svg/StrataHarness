@@ -43,7 +43,7 @@ Entornos de agentes de IA compatibles:
 ### Qué sucede en el modo `New`
 - Elimina los metadatos de desarrollo de la plantilla y los archivos de versión (`tests/`, `docs/dry-run-checklist.md`, especificaciones y ADR de la plantilla, `LICENSE`, `CHANGELOG.md`, `VERSION`, `.github/`, `README.ru.md`, `README.zh-CN.md`, `README.es.md`, `README.fr.md`, `README.pt-PT.md`, `CONTRIBUTING.md`, `SECURITY.md`, `docs/releasing.md` y la skill `release`).
 - Conserva [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
-- Configura esqueletos iniciales limpios para tu proyecto (`README.md`, [`.agents/CONTEXT.md`](.agents/CONTEXT.md), `CODING_STANDARDS.md`, [`docs/handoff/LATEST.md`](docs/handoff/LATEST.md)).
+- Configura esqueletos iniciales limpios para tu proyecto (`README.md`, [`.agents/CONTEXT.md`](.agents/CONTEXT.md), `CODING_STANDARDS.md`, `docs/handoff/LATEST.md`).
 - Registra la versión de la plantilla (`vX.Y.Z (<sha>)`) y su origen en la cabecera del Registro de Skills.
 - Configura el gestor de tareas (por ejemplo, el gestor local en `.scratch/<feature>/issues/`).
 

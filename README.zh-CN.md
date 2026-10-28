@@ -43,7 +43,7 @@
 ### `New` 模式执行内容
 - 清理模板开发元数据与发布文件（`tests/`、`docs/dry-run-checklist.md`、模板规格说明与 ADR、`LICENSE`、`CHANGELOG.md`、`VERSION`、`.github/`、`README.ru.md`、`README.zh-CN.md`、`README.es.md`、`README.fr.md`、`README.pt-PT.md`、`CONTRIBUTING.md`、`SECURITY.md`、`docs/releasing.md` 以及 `release` 技能）。
 - 保留 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。
-- 为你的项目建立初始框架骨架（`README.md`、[`.agents/CONTEXT.md`](.agents/CONTEXT.md)、`CODING_STANDARDS.md`、[`docs/handoff/LATEST.md`](docs/handoff/LATEST.md)）。
+- 为你的项目建立初始框架骨架（`README.md`、[`.agents/CONTEXT.md`](.agents/CONTEXT.md)、`CODING_STANDARDS.md`、`docs/handoff/LATEST.md`）。
 - 在技能注册表表头记录模板版本（`vX.Y.Z (<sha>)`）及来源。
 - 配置任务跟踪器（例如 `.scratch/<feature>/issues/` 中的本地跟踪器）。
 

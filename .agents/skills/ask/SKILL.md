@@ -81,9 +81,9 @@ The two end-of-stage transitions serve distinct purposes:
 | Aspect | `/handoff` | `/close-task` |
 |---|---|---|
 | **Purpose** | Context transfer between sessions or environments. | Terminal completion of a finished task. |
-| **Git commit** | **Never commits.** Working tree changes remain uncommitted. | **Commits.** Runs preflight checks, then creates one conventional commit. |
+| **Git commit** | **Never commits.** Working tree changes remain uncommitted. | **Commits trackable changes.** Runs preflight checks, then creates one conventional commit (skips commit if all task artifacts are git-ignored). |
 | **Git push** | Never pushes. | Never pushes. Publishing stays with the human. |
-| **Artifacts** | Writes `docs/handoff/YYYY-MM-DD-<feature>.md` and updates `docs/handoff/LATEST.md`. | Runs `/handoff` steps; handoff doc and `LATEST.md` join the commit. |
+| **Artifacts** | Writes `docs/handoff/YYYY-MM-DD-<feature>.md` and updates `docs/handoff/LATEST.md`. | Runs `/handoff` steps; handoff doc and `LATEST.md` join the commit unless git-ignored. |
 | **Scratch cleanup** | Removes finished tickets and temporary files from `.scratch/`; open tickets remain. | Same scratch cleanup; removes entire `.scratch/<feature>/` if no open tickets remain. |
 | **Trigger** | User command mid-feature, when switching harness, or between Multi-Session milestones. | User explicit command («закрывай задачу», «фиксируй») after review is resolved. |
 | **Reference** | [`../handoff/SKILL.md`](../handoff/SKILL.md) | [`../close-task/SKILL.md`](../close-task/SKILL.md) |

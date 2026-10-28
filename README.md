@@ -41,7 +41,7 @@ Supported AI agent environments:
 ### What happens in `New` mode
 - Removes Template development metadata and release files (`tests/`, `docs/dry-run-checklist.md`, template specs and ADRs, `LICENSE`, `CHANGELOG.md`, `VERSION`, `.github/`, `README.ru.md`, `CONTRIBUTING.md`, `SECURITY.md`, `docs/releasing.md`, and the `release` skill).
 - Preserves [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
-- Sets up clean starter skeletons for your project (`README.md`, [`.agents/CONTEXT.md`](.agents/CONTEXT.md), `CODING_STANDARDS.md`, [`docs/handoff/LATEST.md`](docs/handoff/LATEST.md)).
+- Sets up clean starter skeletons for your project (`README.md`, [`.agents/CONTEXT.md`](.agents/CONTEXT.md), `CODING_STANDARDS.md`, `docs/handoff/LATEST.md`).
 - Records the template version (`vX.Y.Z (<sha>)`) and source in the Skill Registry header.
 - Configures the task tracker (e.g. local tracker in `.scratch/<feature>/issues/`).
 

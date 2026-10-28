@@ -43,7 +43,7 @@ Ambientes de agentes de IA suportados:
 ### O que acontece no modo `New`
 - Elimina os metadados de desenvolvimento do modelo e ficheiros de lançamento (`tests/`, `docs/dry-run-checklist.md`, especificações e ADRs internas do modelo, `LICENSE`, `CHANGELOG.md`, `VERSION`, `.github/`, `README.ru.md`, `README.zh-CN.md`, `README.es.md`, `README.fr.md`, `README.pt-PT.md`, `CONTRIBUTING.md`, `SECURITY.md`, `docs/releasing.md` e a skill `release`).
 - Preserva [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
-- Configura esqueletos iniciais limpos para o seu projeto (`README.md`, [`.agents/CONTEXT.md`](.agents/CONTEXT.md), `CODING_STANDARDS.md`, [`docs/handoff/LATEST.md`](docs/handoff/LATEST.md)).
+- Configura esqueletos iniciais limpos para o seu projeto (`README.md`, [`.agents/CONTEXT.md`](.agents/CONTEXT.md), `CODING_STANDARDS.md`, `docs/handoff/LATEST.md`).
 - Regista a versão do modelo (`vX.Y.Z (<sha>)`) e a respetiva origem no cabeçalho do Registo de Skills.
 - Configura o gestor de tarefas (por exemplo, o gestor local em `.scratch/<feature>/issues/`).
 

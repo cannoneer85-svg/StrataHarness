@@ -39,4 +39,4 @@ Write `docs/analysis/YYYY-MM-DD-<topic>.md` (today's date; if the file exists, a
 Close only on the user's explicit command:
 
 - **Handoff** — [handoff](../handoff/SKILL.md): move the context to a fresh session, nothing committed.
-- **Close-task** — [close-task](../close-task/SKILL.md): handoff plus one commit carrying the analysis document. An Analysis task has no tickets, tests or code review: record those preflight checks as "not applicable".
+- **Close-task** — [close-task](../close-task/SKILL.md): handoff plus one commit carrying the analysis document (or local-only completion without a commit when `docs/analysis/` and `docs/handoff/` are git-ignored). An Analysis task has no tickets, tests or code review: record those preflight checks as "not applicable".

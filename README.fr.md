@@ -43,7 +43,7 @@ Environnements d'agents IA pris en charge :
 ### Ce qui se passe en mode `New`
 - Suppression des métadonnées de développement et des fichiers de publication du modèle (`tests/`, `docs/dry-run-checklist.md`, spécifications et ADRs internes du modèle, `LICENSE`, `CHANGELOG.md`, `VERSION`, `.github/`, `README.ru.md`, `README.zh-CN.md`, `README.es.md`, `README.fr.md`, `README.pt-PT.md`, `CONTRIBUTING.md`, `SECURITY.md`, `docs/releasing.md` ainsi que la skill `release`).
 - Préservation de [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
-- Mise en place de structures squelettes initiales pour votre projet (`README.md`, [`.agents/CONTEXT.md`](.agents/CONTEXT.md), `CODING_STANDARDS.md`, [`docs/handoff/LATEST.md`](docs/handoff/LATEST.md)).
+- Mise en place de structures squelettes initiales pour votre projet (`README.md`, [`.agents/CONTEXT.md`](.agents/CONTEXT.md), `CODING_STANDARDS.md`, `docs/handoff/LATEST.md`).
 - Enregistrement de la version du modèle (`vX.Y.Z (<sha>)`) et de sa source dans l'en-tête du registre de skills.
 - Configuration du gestionnaire de tâches (par exemple, le tracker local dans `.scratch/<feature>/issues/`).
 

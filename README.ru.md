@@ -41,7 +41,7 @@
 ### Что произойдёт в режиме `New`
 - Удалятся метадокументы разработки самого Шаблона и релизные файлы (`tests/`, `docs/dry-run-checklist.md`, спеки и ADR шаблона, `LICENSE`, `CHANGELOG.md`, `VERSION`, `.github/`, `README.ru.md`, `CONTRIBUTING.md`, `SECURITY.md`, `docs/releasing.md` и скилл `release`).
 - Сохранится [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
-- Документы заменятся чистыми скелетами для нового проекта (`README.md`, [`.agents/CONTEXT.md`](.agents/CONTEXT.md), `CODING_STANDARDS.md`, [`docs/handoff/LATEST.md`](docs/handoff/LATEST.md)).
+- Документы заменятся чистыми скелетами для нового проекта (`README.md`, [`.agents/CONTEXT.md`](.agents/CONTEXT.md), `CODING_STANDARDS.md`, `docs/handoff/LATEST.md`).
 - В заголовке Реестра скиллов зафиксируются версия шаблона (`vX.Y.Z (<sha>)`) и источник.
 - Настроится трекер задач (например, локальный трекер в `.scratch/<feature>/issues/`).
 

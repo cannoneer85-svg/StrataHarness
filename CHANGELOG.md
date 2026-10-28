@@ -8,6 +8,17 @@ Each release section is titled `## [X.Y.Z] - YYYY-MM-DD - <release title>` and m
 
 ## [Unreleased]
 
+## [1.4.6] - 2026-10-28 - Engineering heuristics in core skills and local-only analysis/handoff artifacts
+
+### Added
+- **2-strike premise reset (`implement`, `brief-template.md`, `diagnosing-bugs`):** Require agents and implementer subagents to stop blind retries when two consecutive fix attempts fail the same test, reproduction loop, or validator, write their shared premise in one sentence, and verify or falsify it against the code or environment before a third attempt — stopping (`blocked`, Phase 3 re-ranking, or user escalation) if the premise breaks outside scope or the third attempt fails.
+- **TDD loop hardening (`tdd`):** Require running the new test in the Red phase to confirm it fails on the expected assertion (never counting syntax, import, or setup errors as red), add the `Hollow assertion` anti-pattern (empty-return / no-op check with seam renegotiation or `blocked` escalation instead of internal mocks or skipped coverage), and require a characterization (`pinning`) test at an agreed public seam before structurally refactoring uncovered code.
+- **Boundary data shaping and `TRADEOFF`-gated suppression ban (`minimal-diff`):** Add `Shape data at the boundary first` (model types before branching so invalid states are unrepresentable for new/modified contracts in scope, parsing external input once at the trust boundary instead of scattering defensive `null` / `?.` guards inside core logic) and forbid silencing compiler, typechecker, or linter diagnostics (`@ts-ignore`, `@ts-expect-error`, `as any`, `# type: ignore`, `eslint-disable`, `[SuppressMessage]`, `nolint`) without an adjacent `TRADEOFF(<ticket>): <why>` comment.
+- **Single-unit exemplar check for wide refactors (`to-tickets`):** Require proving mechanical migrations by hand on one representative unit against project validators during the `First expand` step before fanning out batch tickets or codemods.
+
+### Changed
+- **Local-only analysis and handoff artifacts (`.gitignore`, `close-task`, `analyze`, `ask`, `README*`):** Ignore `docs/analysis/*` and `docs/handoff/*` (keeping `.gitkeep` directory scaffolds tracked), untrack historical template analysis and handoff files from Git while preserving local working copies, and filter git-ignored paths via `git check-ignore` before staging in `close-task` and `analyze`.
+
 ## [1.4.5] - 2026-10-26 - Dual-channel stop gates (text options + interactive tool call)
 
 ### Fixed
